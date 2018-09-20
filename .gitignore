@@ -1,0 +1,13 @@
+*.pyc
+db.sqlite3
+manage.py
+media/
+media/*
+ws/*
+ws/
+wide_sight/bak/
+wide_sight/migrations/
+wide_sight/__pycache__/
+wide_sight/templates/bak/
+wide_sight.egg-info/
+wide_sight.egg-info/*

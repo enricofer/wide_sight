@@ -1,0 +1,7 @@
+django
+Pillow
+psycopg2
+django-imagekit
+djangorestframework
+djangorestframework-gis
+pygdal
