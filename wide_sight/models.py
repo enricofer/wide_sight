@@ -1,5 +1,6 @@
 import uuid
 import os
+import exifread
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -17,7 +18,7 @@ def validate_file_extension(value):
 
 class sequences(models.Model):
     uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    geom = models.LineStringField(srid=4326)
+    geom = models.LineStringField(srid=4326, blank=True, null=True)
     shooting_data = models.DateField()
     creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
     note = models.CharField(max_length=50,blank=True)
@@ -25,6 +26,7 @@ class sequences(models.Model):
     class Meta:
         verbose_name_plural = "Sequences"
         verbose_name = "Sequence"
+        app_label = 'wide_sight'
 
 class panoramas(models.Model):
 
@@ -32,6 +34,10 @@ class panoramas(models.Model):
         path = "panos/%s" % str(instance.sequence.uiid)
         if not os.path.exists(os.path.join(settings.MEDIA_ROOT,path)):
             os.makedirs(os.path.join(settings.MEDIA_ROOT,path))
+
+        f = open(os.path.join(settings.MEDIA_ROOT,path, filename), 'rb')
+        exiftags = exifread.process_file(f)
+        print ("EXIFTAGS",exiftags, file=sys.stderr)
         return os.path.join(path, filename)
 
     uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -41,7 +47,7 @@ class panoramas(models.Model):
                                       format='JPEG',
                                       options={'quality': 60})
     geom = models.PointField(srid=4326, blank=True, null=True, geography=True)
-    sequence = models.ForeignKey('sequences', on_delete=models.PROTECT)
+    sequence = models.ForeignKey('sequences',blank=True, null=True, on_delete=models.PROTECT)
     lon = models.FloatField(blank=True, null=True)
     lat = models.FloatField(blank=True, null=True)
     elevation = models.FloatField(blank=True, null=True)
@@ -55,6 +61,7 @@ class panoramas(models.Model):
     class Meta:
         verbose_name_plural = "Panoramas"
         verbose_name = "Panorama"
+        app_label = 'wide_sight'
 
 @receiver(post_save, sender=panoramas)
 def sync_geom(sender, instance,  **kwargs):
@@ -102,16 +109,17 @@ class image_objects(models.Model):
     class Meta:
         verbose_name_plural = "Image_objects"
         verbose_name = "Image_object"
+        app_label = 'wide_sight'
 
 class userkeys(models.Model):
     '''
     https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
     '''
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    expire = models.DateField()
     context = models.MultiPolygonField(srid=4326)
 
     class Meta:
         verbose_name_plural = "Userkeys"
         verbose_name = "Userkey"
+        app_label = 'wide_sight'

@@ -2,7 +2,10 @@ from rest_framework import serializers
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys
 
 
-class sequences_serializer(serializers.HyperlinkedModelSerializer):#HyperlinkedModelSerializer ModelSerializer
+class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSerializer ModelSerializer
+
+    creator = serializers.SlugRelatedField(queryset=userkeys.objects.all(), slug_field='key') #serializers.PrimaryKeyRelatedField(queryset=userkeys.objects.all())
+
     class Meta:
         model = sequences
         fields = ('uiid', 'geom', 'shooting_data', 'creator','note','pk')
@@ -26,4 +29,4 @@ class image_objects_serializer(serializers.HyperlinkedModelSerializer):
 class userkeys_serializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = userkeys
-        fields = ('user', 'key', 'expire', 'pk')
+        fields = ('user', 'key', 'pk', 'context')
