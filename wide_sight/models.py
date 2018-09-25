@@ -1,6 +1,8 @@
 import uuid
 import os
 import exifread
+import sys
+import datetime
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -11,6 +13,8 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.gis.geos import Point
+from rest_framework_api_key.models import APIKey
+from rest_framework_api_key.helpers import generate_key
 
 def validate_file_extension(value):
     if not (value.file.content_type == 'image/png' or value.file.content_type == 'image/jpeg'):
@@ -18,8 +22,9 @@ def validate_file_extension(value):
 
 class sequences(models.Model):
     uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=50,blank=True)
     geom = models.LineStringField(srid=4326, blank=True, null=True)
-    shooting_data = models.DateField()
+    shooting_data = models.DateField(default=datetime.date.today, blank=True)
     creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
     note = models.CharField(max_length=50,blank=True)
 
@@ -34,10 +39,6 @@ class panoramas(models.Model):
         path = "panos/%s" % str(instance.sequence.uiid)
         if not os.path.exists(os.path.join(settings.MEDIA_ROOT,path)):
             os.makedirs(os.path.join(settings.MEDIA_ROOT,path))
-
-        f = open(os.path.join(settings.MEDIA_ROOT,path, filename), 'rb')
-        exiftags = exifread.process_file(f)
-        print ("EXIFTAGS",exiftags, file=sys.stderr)
         return os.path.join(path, filename)
 
     uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -57,6 +58,8 @@ class panoramas(models.Model):
     roll = models.FloatField(blank=True, null=True)
     address = models.CharField(max_length=150,blank=True)
     note = models.CharField(max_length=50,blank=True)
+    shooting_data = models.DateTimeField(default=datetime.datetime.now, blank=True)
+    creator = models.ForeignKey('userkeys', on_delete=models.PROTECT, blank=True, null=True)
 
     class Meta:
         verbose_name_plural = "Panoramas"
@@ -66,7 +69,17 @@ class panoramas(models.Model):
 @receiver(post_save, sender=panoramas)
 def sync_geom(sender, instance,  **kwargs):
     update_fields = kwargs["update_fields"]
-    if update_fields:
+    created = kwargs["created"]
+    print ("instance",instance, file=sys.stderr)
+    print ("kwargs",kwargs, file=sys.stderr)
+    print ("update_fields",update_fields, file=sys.stderr)
+
+    if created or update_fields:
+        if created or 'eqimage' in update_fields:
+            f = open(os.path.join(settings.MEDIA_ROOT,instance.eqimage), 'rb')
+            print ("eqimage",os.path.join(settings.MEDIA_ROOT,instance.eqimage), file=sys.stderr)
+            exiftags = exifread.process_file(f)
+            print ("EXIFTAGS",exiftags, file=sys.stderr)
         if 'lon' in update_fields or 'lat' in update_fields:
             instance.geom = Point(instance.lon,instance.lat)
             instance.save()
@@ -116,10 +129,19 @@ class userkeys(models.Model):
     https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
     '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    app_name = models.CharField(max_length=50)
     key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    api_key = models.CharField(max_length=60, null=True, blank=True)
     context = models.MultiPolygonField(srid=4326)
 
     class Meta:
         verbose_name_plural = "Userkeys"
         verbose_name = "Userkey"
         app_label = 'wide_sight'
+
+@receiver(post_save, sender=userkeys)
+def get_APIkey(sender, instance,  **kwargs):
+    created = kwargs["created"]
+    if created:
+        instance.api_key = APIKey.objects.create(name=instance.app_name, key=generate_key()).key
+        instance.save()
