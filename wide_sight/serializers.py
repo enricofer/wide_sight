@@ -29,4 +29,4 @@ class image_objects_serializer(serializers.ModelSerializer):
 class userkeys_serializer(serializers.ModelSerializer):
     class Meta:
         model = userkeys
-        fields = ('user', 'key', 'pk', 'context')
+        fields = ('user', 'key', 'app_keys', 'pk', 'context')

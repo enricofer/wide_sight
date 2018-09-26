@@ -10,7 +10,7 @@ from django.contrib.gis.db import models
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
 from django.conf import settings
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.contrib.gis.geos import Point
 from rest_framework_api_key.models import APIKey
@@ -22,7 +22,7 @@ def validate_file_extension(value):
 
 class sequences(models.Model):
     uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=50,blank=True)
+    title = models.CharField(max_length=50)
     geom = models.LineStringField(srid=4326, blank=True, null=True)
     shooting_data = models.DateField(default=datetime.date.today, blank=True)
     creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
@@ -32,6 +32,10 @@ class sequences(models.Model):
         verbose_name_plural = "Sequences"
         verbose_name = "Sequence"
         app_label = 'wide_sight'
+
+@receiver(pre_delete, sender=sequences)
+def delete_panorama(sender, instance, **kwargs):
+    os.rmdir(os.path.join(settings.MEDIA_ROOT,instance.uuid))
 
 class panoramas(models.Model):
 
@@ -48,7 +52,7 @@ class panoramas(models.Model):
                                       format='JPEG',
                                       options={'quality': 60})
     geom = models.PointField(srid=4326, blank=True, null=True, geography=True)
-    sequence = models.ForeignKey('sequences',blank=True, null=True, on_delete=models.PROTECT)
+    sequence = models.ForeignKey('sequences', on_delete=models.PROTECT)
     lon = models.FloatField(blank=True, null=True)
     lat = models.FloatField(blank=True, null=True)
     elevation = models.FloatField(blank=True, null=True)
@@ -56,10 +60,12 @@ class panoramas(models.Model):
     heading = models.FloatField(blank=True, null=True)
     pitch = models.FloatField(blank=True, null=True)
     roll = models.FloatField(blank=True, null=True)
+    fov = models.FloatField(blank=True, null=True)
+    camera_prod = models.CharField(max_length=50,blank=True)
+    camera_model = models.CharField(max_length=50,blank=True)
     address = models.CharField(max_length=150,blank=True)
     note = models.CharField(max_length=50,blank=True)
-    shooting_data = models.DateTimeField(default=datetime.datetime.now, blank=True)
-    creator = models.ForeignKey('userkeys', on_delete=models.PROTECT, blank=True, null=True)
+    shooting_time = models.DateTimeField(default=datetime.datetime.now, blank=True)
 
     class Meta:
         verbose_name_plural = "Panoramas"
@@ -83,6 +89,10 @@ def sync_geom(sender, instance,  **kwargs):
         if 'lon' in update_fields or 'lat' in update_fields:
             instance.geom = Point(instance.lon,instance.lat)
             instance.save()
+
+@receiver(pre_delete, sender=panoramas)
+def delete_panorama(sender, instance, **kwargs):
+    os.remove(os.path.join(settings.MEDIA_ROOT,instance.eqimage))
 
 
 class image_object_types(models.Model):
@@ -124,22 +134,31 @@ class image_objects(models.Model):
         verbose_name = "Image_object"
         app_label = 'wide_sight'
 
+class appkeys(models.Model):
+    app_name = models.CharField(max_length=50)
+    key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    api_key = models.CharField(max_length=60, null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Appkeys"
+        verbose_name = "Appkey"
+        app_label = 'wide_sight'
+
 class userkeys(models.Model):
     '''
     https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
     '''
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    app_name = models.CharField(max_length=50)
     key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    api_key = models.CharField(max_length=60, null=True, blank=True)
-    context = models.MultiPolygonField(srid=4326)
+    app_keys = models.ManyToManyField(appkeys)
+    context = models.MultiPolygonField(srid=4326, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "Userkeys"
         verbose_name = "Userkey"
         app_label = 'wide_sight'
 
-@receiver(post_save, sender=userkeys)
+@receiver(post_save, sender=appkeys)
 def get_APIkey(sender, instance,  **kwargs):
     created = kwargs["created"]
     if created:
