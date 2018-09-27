@@ -16,6 +16,8 @@ from django.contrib.gis.geos import Point
 from rest_framework_api_key.models import APIKey
 from rest_framework_api_key.helpers import generate_key
 
+from .exif_gps import get_exif_values
+
 def validate_file_extension(value):
     if not (value.file.content_type == 'image/png' or value.file.content_type == 'image/jpeg'):
         raise ValidationError(u'File not allowed: invalid extension')
@@ -40,10 +42,13 @@ def delete_panorama(sender, instance, **kwargs):
 class panoramas(models.Model):
 
     def upload_img(instance, filename):
-        path = "panos/%s" % str(instance.sequence.uiid)
-        if not os.path.exists(os.path.join(settings.MEDIA_ROOT,path)):
-            os.makedirs(os.path.join(settings.MEDIA_ROOT,path))
-        return os.path.join(path, filename)
+        name, file_extension = os.path.splitext(filename)
+        f_name = str(instance.uiid)+file_extension
+        rel_path = os.path.join("panos",str(instance.sequence.uiid))
+        os_path = os.path.join(settings.MEDIA_ROOT,rel_path)
+        if not os.path.exists(os_path):
+            os.makedirs(os_path)
+        return os.path.join(rel_path, f_name)
 
     uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     eqimage = models.ImageField(upload_to=upload_img)
@@ -61,8 +66,8 @@ class panoramas(models.Model):
     pitch = models.FloatField(blank=True, null=True)
     roll = models.FloatField(blank=True, null=True)
     fov = models.FloatField(blank=True, null=True)
-    camera_prod = models.CharField(max_length=50,blank=True)
-    camera_model = models.CharField(max_length=50,blank=True)
+    camera_prod = models.CharField(max_length=50,blank=True, null=True)
+    camera_model = models.CharField(max_length=50,blank=True, null=True)
     address = models.CharField(max_length=150,blank=True)
     note = models.CharField(max_length=50,blank=True)
     shooting_time = models.DateTimeField(default=datetime.datetime.now, blank=True)
@@ -77,22 +82,24 @@ def sync_geom(sender, instance,  **kwargs):
     update_fields = kwargs["update_fields"]
     created = kwargs["created"]
     print ("instance",instance, file=sys.stderr)
-    print ("kwargs",kwargs, file=sys.stderr)
+    print ("instance.eqimage",instance.eqimage, file=sys.stderr)
     print ("update_fields",update_fields, file=sys.stderr)
 
     if created or update_fields:
         if created or 'eqimage' in update_fields:
-            f = open(os.path.join(settings.MEDIA_ROOT,instance.eqimage), 'rb')
-            print ("eqimage",os.path.join(settings.MEDIA_ROOT,instance.eqimage), file=sys.stderr)
-            exiftags = exifread.process_file(f)
+            exiftags = exifread.process_file(instance.eqimage)
             print ("EXIFTAGS",exiftags, file=sys.stderr)
-        if 'lon' in update_fields or 'lat' in update_fields:
+            instance.lat, instance.lon, instance.elevation, instance.heading, instance.pitch, instance.roll, instance.fov, instance.camera_prod, instance.camera_model  = get_exif_values(exiftags)
+            if instance.lat and instance.lon:
+                instance.geom = Point(instance.lon, instance.lat)
+        if update_fields and ('lon' in update_fields or 'lat' in update_fields):
             instance.geom = Point(instance.lon,instance.lat)
-            instance.save()
+        instance.save()
 
 @receiver(pre_delete, sender=panoramas)
 def delete_panorama(sender, instance, **kwargs):
-    os.remove(os.path.join(settings.MEDIA_ROOT,instance.eqimage))
+    print ("REMOVING",instance.eqimage.name, file=sys.stderr)
+    os.remove(os.path.join(settings.MEDIA_ROOT,instance.eqimage.name))
 
 
 class image_object_types(models.Model):
@@ -144,6 +151,22 @@ class appkeys(models.Model):
         verbose_name = "Appkey"
         app_label = 'wide_sight'
 
+@receiver(post_save, sender=appkeys)
+def get_APIkey(sender, instance,  **kwargs):
+    created = kwargs["created"]
+    if created:
+        instance.api_key = APIKey.objects.create(name=instance.app_name, key=generate_key()).key
+        instance.save()
+
+'''
+@receiver(post_save, sender=appkeys)
+def get_APIkey(sender, instance,  **kwargs):
+    created = kwargs["created"]
+    if created:
+        instance.api_key = APIKey.objects.create(name=instance.app_name, key=generate_key()).key
+        instance.save()
+'''
+
 class userkeys(models.Model):
     '''
     https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
@@ -157,10 +180,3 @@ class userkeys(models.Model):
         verbose_name_plural = "Userkeys"
         verbose_name = "Userkey"
         app_label = 'wide_sight'
-
-@receiver(post_save, sender=appkeys)
-def get_APIkey(sender, instance,  **kwargs):
-    created = kwargs["created"]
-    if created:
-        instance.api_key = APIKey.objects.create(name=instance.app_name, key=generate_key()).key
-        instance.save()

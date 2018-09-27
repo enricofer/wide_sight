@@ -14,7 +14,7 @@ class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSeriali
 class panoramas_serializer(serializers.ModelSerializer):
     class Meta:
         model = panoramas
-        fields = ('uiid', 'eqimage', 'geom', 'sequence', 'lon', 'lat', 'elevation', 'accurancy', 'heading', 'pitch', 'roll', 'address', 'note')
+        fields = ('uiid', 'eqimage', 'geom', 'sequence', 'lon', 'lat', 'elevation', 'accurancy', 'heading', 'pitch', 'roll', 'fov', 'camera_prod', 'camera_model', 'address', 'note')
 
 class image_object_types_serializer(serializers.ModelSerializer):
     class Meta:

@@ -17,7 +17,7 @@ class sequencesViewSet(viewsets.ModelViewSet):
     """
     queryset = sequences.objects.all()
     serializer_class = sequences_serializer
-    permission_classes = ( Or(IsAuthenticated, HasAPIAccess),)
+    permission_classes = ( Or(HasAPIAccess, IsAuthenticated, ),)
 
 class panoramasViewSet(viewsets.ModelViewSet):
     """
@@ -50,7 +50,7 @@ class image_object_typesViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = image_object_types.objects.all()
     serializer_class = image_object_types_serializer
-    permission_classes = ( Or(IsAuthenticated, HasAPIAccess),)
+    permission_classes = ( Or(HasAPIAccess, IsAuthenticated, ),)
 
 class image_objectsViewSet(viewsets.ModelViewSet):
     """
