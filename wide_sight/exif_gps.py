@@ -1,6 +1,8 @@
 import exifread
 import sys
 import math
+import piexif
+from PIL import Image
 
 # based on https://gist.github.com/erans/983821
 
@@ -107,3 +109,11 @@ def get_exif_values(exif_data):
 
     print ('ESITO',lat, lon, gps_altitude, track or img_direction, gps_pitch, gps_roll, fov, camera_maker, camera_model, file=sys.stderr)
     return lat, lon, altitude, track or img_direction, gps_pitch, gps_roll, fov, camera_maker, camera_model
+
+def set_heading_tag(img_file,heading):
+    img = Image.open(img_file)
+    exif_dict = piexif.load(img.info['exif'])
+    exif_dict['GPS'][piexif.GPSIFD.GPSImgDirection] = heading.as_integer_ratio()
+    exif_bytes = piexif.dump(exif_dict)
+    img.save('_%s' % fname, "jpeg", exif=exif_bytes) #assuming file format is JPEG
+
