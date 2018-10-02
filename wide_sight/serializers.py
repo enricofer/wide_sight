@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.reverse import reverse
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys
 
 class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSerializer ModelSerializer
@@ -15,6 +16,12 @@ class panoramas_serializer(serializers.ModelSerializer):
     class Meta:
         model = panoramas
         fields = ('uiid', 'eqimage', 'geom', 'sequence', 'lon', 'lat', 'elevation', 'accurancy', 'heading', 'pitch', 'roll', 'fov', 'camera_prod', 'camera_model', 'address', 'note')
+
+class panoramas_geo_serializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = panoramas
+        geo_field = "geom"
+        fields = ('uiid', 'eqimage', 'sequence', 'elevation', 'accurancy', 'heading', 'pitch', 'roll', 'fov', 'camera_prod', 'camera_model', 'address', 'note')
 
 class image_object_types_serializer(serializers.ModelSerializer):
     class Meta:

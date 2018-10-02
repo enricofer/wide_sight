@@ -15,8 +15,11 @@ from django.dispatch import receiver
 from django.contrib.gis.geos import Point
 from rest_framework_api_key.models import APIKey
 from rest_framework_api_key.helpers import generate_key
+from dirtyfields import DirtyFieldsMixin
 
-from .exif_gps import get_exif_values
+from .exif_gps import get_exif_values, set_heading_tag
+
+
 
 def validate_file_extension(value):
     if not (value.file.content_type == 'image/png' or value.file.content_type == 'image/jpeg'):
@@ -35,11 +38,14 @@ class sequences(models.Model):
         verbose_name = "Sequence"
         app_label = 'wide_sight'
 
+    def __str__(self):
+        return '%d_%s' % (self.uiid,self.title)
+
 @receiver(pre_delete, sender=sequences)
-def delete_panorama(sender, instance, **kwargs):
+def delete_sequence(sender, instance, **kwargs):
     os.rmdir(os.path.join(settings.MEDIA_ROOT,instance.uuid))
 
-class panoramas(models.Model):
+class panoramas(DirtyFieldsMixin, models.Model):
 
     def upload_img(instance, filename):
         name, file_extension = os.path.splitext(filename)
@@ -70,31 +76,44 @@ class panoramas(models.Model):
     camera_model = models.CharField(max_length=50,blank=True, null=True)
     address = models.CharField(max_length=150,blank=True)
     note = models.CharField(max_length=50,blank=True)
-    shooting_time = models.DateTimeField(default=datetime.datetime.now, blank=True)
+    shooting_time = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True)
 
     class Meta:
         verbose_name_plural = "Panoramas"
         verbose_name = "Panorama"
         app_label = 'wide_sight'
 
-@receiver(post_save, sender=panoramas)
+    def save(self, *args, **kwargs):
+        for key, value in kwargs.items():
+            print ("%s == %s" %(key, value))
+        print ("dirty_fields",self.get_dirty_fields(), file=sys.stderr)
+        if self.heading and'heading' in self.get_dirty_fields():
+            set_heading_tag(os.path.join(settings.MEDIA_ROOT,self.eqimage.path),self.heading)
+        if 'eqimage' in self.get_dirty_fields():
+            exiftags = exifread.process_file(self.eqimage)
+            print ("EXIFTAGS",exiftags, file=sys.stderr)
+            self.lat, self.lon, self.elevation, self.heading, self.pitch, self.roll, self.fov, self.camera_prod, self.camera_model, self.shooting_time  = get_exif_values(exiftags)
+        if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
+            self.geom = Point(self.lon,self.lat)
+        super(panoramas,self).save(*args, **kwargs)
+
+#@receiver(post_save, sender=panoramas)
 def sync_geom(sender, instance,  **kwargs):
-    update_fields = kwargs["update_fields"]
+    update_fields = instance.get_dirty_fields()
     created = kwargs["created"]
     print ("instance",instance, file=sys.stderr)
     print ("instance.eqimage",instance.eqimage, file=sys.stderr)
-    print ("update_fields",update_fields, file=sys.stderr)
+    print ("dirty_fields",instance.get_dirty_fields(), file=sys.stderr)
 
     if created or update_fields:
         if created or 'eqimage' in update_fields:
             exiftags = exifread.process_file(instance.eqimage)
             print ("EXIFTAGS",exiftags, file=sys.stderr)
             instance.lat, instance.lon, instance.elevation, instance.heading, instance.pitch, instance.roll, instance.fov, instance.camera_prod, instance.camera_model  = get_exif_values(exiftags)
-            if instance.lat and instance.lon:
-                instance.geom = Point(instance.lon, instance.lat)
+            instance.save()
         if update_fields and ('lon' in update_fields or 'lat' in update_fields):
-            instance.geom = Point(instance.lon,instance.lat)
-        instance.save()
+            self.geom = Point(self.lon,self.lat)
+            instance.save()
 
 @receiver(pre_delete, sender=panoramas)
 def delete_panorama(sender, instance, **kwargs):
@@ -151,6 +170,9 @@ class appkeys(models.Model):
         verbose_name = "Appkey"
         app_label = 'wide_sight'
 
+    def __str__(self):
+        return '%s_%s' % (self.app_name,self.api_key)
+
 @receiver(post_save, sender=appkeys)
 def get_APIkey(sender, instance,  **kwargs):
     created = kwargs["created"]
@@ -180,3 +202,6 @@ class userkeys(models.Model):
         verbose_name_plural = "Userkeys"
         verbose_name = "Userkey"
         app_label = 'wide_sight'
+
+    def __str__(self):
+        return '%d_%s' % (self.key,self.user)

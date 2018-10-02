@@ -2,6 +2,7 @@ import exifread
 import sys
 import math
 import piexif
+from datetime import datetime
 from PIL import Image
 
 # based on https://gist.github.com/erans/983821
@@ -38,6 +39,9 @@ def _convert_to_double(value):
     print ("EXIT VALUE",value, file=sys.stderr)
     return float(value.values[0].num) / float(value.values[0].den)
 
+def _convert_to_date(value):
+    return datetime.strptime(str(value), '%Y:%m:%d  %H:%M:%S')
+
 def get_exif_values(exif_data):
     """
     Returns the latitude and longitude, if available, from the provided exif_data (obtained through get_exif_data above)
@@ -58,6 +62,8 @@ def get_exif_values(exif_data):
     focal_length = _get_if_exist(exif_data, 'EXIF FocalLength')
     camera_maker = _get_if_exist(exif_data, 'Image Make')
     camera_model = _get_if_exist(exif_data, 'Image Model')
+    original_date_time = _get_if_exist(exif_data, 'EXIF DateTimeOriginal')
+    digitized_date_time = _get_if_exist(exif_data, 'EXIF DateTimeDigitized')
 
     print ("sensor_pixel_width",sensor_pixel_width, file=sys.stderr)
     print ("focal_plane_x_res",focal_plane_x_res, file=sys.stderr)
@@ -101,19 +107,22 @@ def get_exif_values(exif_data):
     else:
         altitude = None
 
+    if original_date_time or digitized_date_time:
+        shot_time = _convert_to_date(digitized_date_time or original_date_time)
+    else:
+        shot_time = None
+
     if sensor_pixel_width and focal_plane_x_res and focal_length:
         sensor_dim = _convert_to_double(sensor_pixel_width) / _convert_to_double(focal_plane_x_res)
         fov =  2 * atan( (sensor_dim/2) / _convert_to_double(focal_length))
     else:
         fov = None
 
-    print ('ESITO',lat, lon, gps_altitude, track or img_direction, gps_pitch, gps_roll, fov, camera_maker, camera_model, file=sys.stderr)
-    return lat, lon, altitude, track or img_direction, gps_pitch, gps_roll, fov, camera_maker, camera_model
+    return lat, lon, altitude, track or img_direction, gps_pitch, gps_roll, fov, camera_maker, camera_model, shot_time
 
 def set_heading_tag(img_file,heading):
     img = Image.open(img_file)
     exif_dict = piexif.load(img.info['exif'])
     exif_dict['GPS'][piexif.GPSIFD.GPSImgDirection] = heading.as_integer_ratio()
     exif_bytes = piexif.dump(exif_dict)
-    img.save('_%s' % fname, "jpeg", exif=exif_bytes) #assuming file format is JPEG
-
+    img.save(img_file, "jpeg", exif=exif_bytes) #assuming file format is JPEG

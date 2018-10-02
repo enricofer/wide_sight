@@ -5,7 +5,7 @@ djangorestframework==3.8.2
 djangorestframework-gis==0.13
 ExifRead==2.1.2
 #pygdal
-GDAL
+#GDAL
 numpy==1.15.1
 pilkit==2.0
 Pillow==5.2.0
@@ -16,3 +16,5 @@ six==1.11.0
 drfapikey
 rest_condition
 piexif
+django-dirtyfields
+django-filter
