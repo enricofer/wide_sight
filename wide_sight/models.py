@@ -7,6 +7,7 @@ import datetime
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
+from django.contrib.gis.geos import GEOSGeometry, LineString, MultiPoint
 from imagekit.models import ImageSpecField
 from imagekit.processors import ResizeToFill
 from django.conf import settings
@@ -22,13 +23,13 @@ from .exif_gps import get_exif_values, set_heading_tag
 
 
 def validate_file_extension(value):
-    if not (value.file.content_type == 'image/png' or value.file.content_type == 'image/jpeg'):
+    if value.file.content_type == 'image/jpeg':
         raise ValidationError(u'File not allowed: invalid extension')
 
 class sequences(models.Model):
-    uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=50)
-    geom = models.LineStringField(srid=4326, blank=True, null=True)
+    geom = models.MultiPointField(srid=4326, blank=True, null=True)
     shooting_data = models.DateField(default=datetime.date.today, blank=True)
     creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
     note = models.CharField(max_length=50,blank=True)
@@ -37,9 +38,10 @@ class sequences(models.Model):
         verbose_name_plural = "Sequences"
         verbose_name = "Sequence"
         app_label = 'wide_sight'
+        ordering = ['shooting_data']
 
     def __str__(self):
-        return '%d_%s' % (self.uiid,self.title)
+        return '%s_%s' % (str(self.id),self.title)
 
 @receiver(pre_delete, sender=sequences)
 def delete_sequence(sender, instance, **kwargs):
@@ -49,14 +51,14 @@ class panoramas(DirtyFieldsMixin, models.Model):
 
     def upload_img(instance, filename):
         name, file_extension = os.path.splitext(filename)
-        f_name = str(instance.uiid)+file_extension
-        rel_path = os.path.join("panos",str(instance.sequence.uiid))
+        f_name = str(instance.id)+file_extension
+        rel_path = os.path.join("panos",str(instance.sequence.id))
         os_path = os.path.join(settings.MEDIA_ROOT,rel_path)
         if not os.path.exists(os_path):
             os.makedirs(os_path)
         return os.path.join(rel_path, f_name)
 
-    uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     eqimage = models.ImageField(upload_to=upload_img)
     eqimage_thumbnail = ImageSpecField(source='eqimage',
                                       processors=[ResizeToFill(480, 240)],
@@ -82,6 +84,7 @@ class panoramas(DirtyFieldsMixin, models.Model):
         verbose_name_plural = "Panoramas"
         verbose_name = "Panorama"
         app_label = 'wide_sight'
+        ordering = ['shooting_time']
 
     def save(self, *args, **kwargs):
         for key, value in kwargs.items():
@@ -96,6 +99,21 @@ class panoramas(DirtyFieldsMixin, models.Model):
         if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
             self.geom = Point(self.lon,self.lat)
         super(panoramas,self).save(*args, **kwargs)
+        update_sequence(self.sequence)
+        #if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
+
+def update_sequence(seq, exclude=None):
+    imgs_in_sequence = panoramas.objects.filter(sequence=seq).order_by('shooting_time')
+    seq_points = []
+    for img in imgs_in_sequence:
+        if exclude and img.pk == exclude.pk:
+            pass
+        else:
+            seq_points.append(img.geom)
+
+    cloud = MultiPoint(seq_points)
+    seq.geom = GEOSGeometry(cloud, srid=4326)
+    seq.save()
 
 #@receiver(post_save, sender=panoramas)
 def sync_geom(sender, instance,  **kwargs):
@@ -119,7 +137,7 @@ def sync_geom(sender, instance,  **kwargs):
 def delete_panorama(sender, instance, **kwargs):
     print ("REMOVING",instance.eqimage.name, file=sys.stderr)
     os.remove(os.path.join(settings.MEDIA_ROOT,instance.eqimage.name))
-
+    update_sequence(instance.sequence, exclude=instance)
 
 class image_object_types(models.Model):
     type = models.CharField(max_length=20,blank=True)
@@ -137,7 +155,7 @@ class image_objects(models.Model):
         (4,'stereo interpretation'),
     )
 
-    uiid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     type = models.ForeignKey('image_object_types', on_delete=models.PROTECT)
     panorama = models.ForeignKey('panoramas', on_delete=models.CASCADE)
     match = models.ManyToManyField("self")
@@ -180,15 +198,6 @@ def get_APIkey(sender, instance,  **kwargs):
         instance.api_key = APIKey.objects.create(name=instance.app_name, key=generate_key()).key
         instance.save()
 
-'''
-@receiver(post_save, sender=appkeys)
-def get_APIkey(sender, instance,  **kwargs):
-    created = kwargs["created"]
-    if created:
-        instance.api_key = APIKey.objects.create(name=instance.app_name, key=generate_key()).key
-        instance.save()
-'''
-
 class userkeys(models.Model):
     '''
     https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
@@ -204,4 +213,4 @@ class userkeys(models.Model):
         app_label = 'wide_sight'
 
     def __str__(self):
-        return '%d_%s' % (self.key,self.user)
+        return '%s_%s' % (str(self.key),self.user)

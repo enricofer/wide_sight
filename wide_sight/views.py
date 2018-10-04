@@ -2,7 +2,7 @@ import sys
 from uuid import UUID
 
 from django.shortcuts import render
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_api_key.permissions import HasAPIAccess
@@ -13,23 +13,23 @@ from rest_condition import Or
 
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
 from .serializers import panoramas_geo_serializer, sequences_serializer, panoramas_serializer, image_object_types_serializer, image_objects_serializer, userkeys_serializer
-
-
-class baseAPIPermission(permissions.BasePermission):
-    def has_permission(self, request, view):
-        print ("baseAPIPermission method",dir(request), file=sys.stderr)
-        try:
-            api_key_get = request.query_params.get('apikey', False)
-            #api_key_post = request.query_params.post('apikey', False)
-            appkeys.objects.get(api_key=api_key_get)# or api_key_post)
-            return True
-        except Exception as e:
-            print ("baseAPIPermission",e, file=sys.stderr)
-            return False
+from .permissions import baseAPIPermission
 
 class sequencesViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows users to be viewed or edited.
+    API endpoint that allows to be view or edit sequences of panorama images.
+
+    get:
+    Return a list of all the existing sequences.
+
+    post:
+    Create a new sequence instance.
+
+    patch:
+    edit and update an existing sequence.
+
+    delete:
+    permanently delete an existing empty sequence.
     """
     queryset = sequences.objects.all()
     serializer_class = sequences_serializer
@@ -45,7 +45,7 @@ class panoramasViewSet(viewsets.ModelViewSet):
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
     distance_filter_field = 'geom'
     filter_backends = (DjangoFilterBackend, DistanceToPointFilter, )
-    filterset_fields = ('sequence', 'uiid', )
+    filterset_fields = ('sequence', 'id', )
 
 
     def destroy(self, request, *args, **kwargs):
@@ -89,7 +89,7 @@ class image_object_typesViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = image_object_types.objects.all()
     serializer_class = image_object_types_serializer
-    permission_classes = ( Or(HasAPIAccess, IsAuthenticated, ),)
+    permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
 
 
 class image_objectsViewSet(viewsets.ModelViewSet):
@@ -98,7 +98,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
     """
     queryset = image_objects.objects.all()
     serializer_class = image_objects_serializer
-    permission_classes = ( Or(IsAuthenticated, HasAPIAccess),)
+    permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
 
 
 class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
@@ -107,4 +107,4 @@ class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = userkeys.objects.all()
     serializer_class = userkeys_serializer
-    permission_classes = ( Or(IsAuthenticated, HasAPIAccess),)
+    permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
