@@ -5,15 +5,22 @@ from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from rest_framework_api_key.permissions import HasAPIAccess
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework_gis.filters import DistanceToPointFilter
+from rest_framework_gis.filters import DistanceToPointFilter, InBBoxFilter
+from rest_framework_gis.pagination import GeoJsonPagination
 from rest_framework.exceptions import APIException
 from rest_condition import Or
 
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
-from .serializers import panoramas_geo_serializer, sequences_serializer, panoramas_serializer, image_object_types_serializer, image_objects_serializer, userkeys_serializer
+from .serializers import panoramas_geo_serializer,sequences_serializer, panoramas_serializer, image_object_types_serializer, image_objects_serializer, userkeys_serializer
 from .permissions import baseAPIPermission
+
+class basePagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
 
 class sequencesViewSet(viewsets.ModelViewSet):
     """
@@ -34,6 +41,7 @@ class sequencesViewSet(viewsets.ModelViewSet):
     queryset = sequences.objects.all()
     serializer_class = sequences_serializer
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+    pagination_class = basePagination
     filter_backends = (DjangoFilterBackend,)
 
 class panoramasViewSet(viewsets.ModelViewSet):
@@ -43,8 +51,10 @@ class panoramasViewSet(viewsets.ModelViewSet):
     queryset = panoramas.objects.all()
     serializer_class = panoramas_serializer
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+    pagination_class = basePagination
     distance_filter_field = 'geom'
-    filter_backends = (DjangoFilterBackend, DistanceToPointFilter, )
+    bbox_filter_field = 'geom'
+    filter_backends = (DjangoFilterBackend, DistanceToPointFilter, InBBoxFilter)
     filterset_fields = ('sequence', 'id', )
 
 
@@ -59,7 +69,7 @@ class panoramasViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         #print ("get_filterset",self, dir(self), file=sys.stderr)
-        limit = self.request.query_params.get('limit', None)
+        #limit = self.request.query_params.get('limit', None)
         userkey = self.request.query_params.get('userkey', None)
         as_geojson = self.request.query_params.get('as_geojson', None)
 
@@ -75,12 +85,21 @@ class panoramasViewSet(viewsets.ModelViewSet):
 
         if as_geojson:
             self.serializer_class = panoramas_geo_serializer
+            self.pagination_class = GeoJsonPagination
 
-        if not limit:
-            limit = 10 #set default limit parameter
-        elif limit > 500: #set default limit parameter
-            limit = 500 #set default limit parameter
-        return self.queryset[:limit]
+        '''
+        print ("COUNT",self.queryset.count(), file=sys.stderr)
+        if self.queryset.count() > 10:
+            if not limit:
+                limit = 10 #set default limit parameter
+            elif limit > 500: #set default limit parameter
+                limit = 500 #set default limit parameter
+            return self.queryset[:limit]
+        else:
+            return self.queryset
+        '''
+
+        return self.queryset
 
 
 class image_object_typesViewSet(viewsets.ReadOnlyModelViewSet):
@@ -99,6 +118,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
     queryset = image_objects.objects.all()
     serializer_class = image_objects_serializer
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+    pagination_class = basePagination
 
 
 class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
@@ -108,3 +128,4 @@ class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = userkeys.objects.all()
     serializer_class = userkeys_serializer
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+    pagination_class = basePagination

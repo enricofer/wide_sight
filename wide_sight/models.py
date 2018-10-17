@@ -3,6 +3,7 @@ import os
 import exifread
 import sys
 import datetime
+import utm
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -19,6 +20,7 @@ from rest_framework_api_key.helpers import generate_key
 from dirtyfields import DirtyFieldsMixin
 
 from .exif_gps import get_exif_values, set_heading_tag
+from .utils import get_utm_srid_from_lonlat
 
 
 
@@ -31,6 +33,7 @@ class sequences(models.Model):
     title = models.CharField(max_length=50)
     geom = models.MultiPointField(srid=4326, blank=True, null=True)
     shooting_data = models.DateField(default=datetime.date.today, blank=True)
+    height_from_ground = models.FloatField(blank=True, null=True)
     creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
     note = models.CharField(max_length=50,blank=True)
 
@@ -68,6 +71,10 @@ class panoramas(DirtyFieldsMixin, models.Model):
     sequence = models.ForeignKey('sequences', on_delete=models.PROTECT)
     lon = models.FloatField(blank=True, null=True)
     lat = models.FloatField(blank=True, null=True)
+    utm_x = models.FloatField(blank=True, null=True)
+    utm_y = models.FloatField(blank=True, null=True)
+    utm_code = models.CharField(max_length=3,blank=True)
+    utm_srid = models.IntegerField(blank=True, null=True)
     elevation = models.FloatField(blank=True, null=True)
     accurancy = models.FloatField(blank=True, null=True)
     heading = models.FloatField(blank=True, null=True)
@@ -98,6 +105,10 @@ class panoramas(DirtyFieldsMixin, models.Model):
             self.lat, self.lon, self.elevation, self.heading, self.pitch, self.roll, self.fov, self.camera_prod, self.camera_model, self.shooting_time  = get_exif_values(exiftags)
         if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
             self.geom = Point(self.lon,self.lat)
+            self.utm_srid = get_utm_srid_from_lonlat(self.lon,self.lat)
+            self.utm_x, self.utm_y, utm_zone_number, utm_letter = utm.from_latlon(self.lat,self.lon)
+            self.utm_code = str(utm_zone_number)+utm_letter
+
         super(panoramas,self).save(*args, **kwargs)
         update_sequence(self.sequence)
         #if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
@@ -130,7 +141,7 @@ def sync_geom(sender, instance,  **kwargs):
             instance.lat, instance.lon, instance.elevation, instance.heading, instance.pitch, instance.roll, instance.fov, instance.camera_prod, instance.camera_model  = get_exif_values(exiftags)
             instance.save()
         if update_fields and ('lon' in update_fields or 'lat' in update_fields):
-            self.geom = Point(self.lon,self.lat)
+            self.geom = Point(self.lon,self.lat, srid=4326)
             instance.save()
 
 @receiver(pre_delete, sender=panoramas)
@@ -165,6 +176,10 @@ class image_objects(models.Model):
     height = models.IntegerField(blank=True)
     lon = models.FloatField(blank=True, null=True)
     lat = models.FloatField(blank=True, null=True)
+    utm_x = models.FloatField(blank=True, null=True)
+    utm_y = models.FloatField(blank=True, null=True)
+    utm_code = models.CharField(max_length=3,blank=True)
+    utm_srid = models.IntegerField(blank=True, null=True)
     elevation = models.FloatField(blank=True, null=True)
     accurancy = models.FloatField(blank=True, null=True)
     sample_type = models.IntegerField(choices=sample_type_choice)

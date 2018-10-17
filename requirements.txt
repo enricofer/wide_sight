@@ -18,3 +18,5 @@ rest_condition
 piexif
 django-dirtyfields
 django-filter
+utm
+django-cors-headers
