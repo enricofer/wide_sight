@@ -1,6 +1,7 @@
 import sys
 from uuid import UUID
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -16,6 +17,10 @@ from rest_condition import Or
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
 from .serializers import panoramas_geo_serializer,sequences_serializer, panoramas_serializer, image_object_types_serializer, image_objects_serializer, userkeys_serializer
 from .permissions import baseAPIPermission
+
+#@login_required(login_url='/login/?next=/viewer/')
+def viewer(request, pano_id):
+    return render(request, 'index.html', {'pano_id': pano_id})
 
 class basePagination(PageNumberPagination):
     page_size = 100
