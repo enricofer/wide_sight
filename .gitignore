@@ -11,3 +11,5 @@ wide_sight/__pycache__/
 wide_sight/templates/bak/
 wide_sight.egg-info/
 wide_sight.egg-info/*
+static/
+static/*

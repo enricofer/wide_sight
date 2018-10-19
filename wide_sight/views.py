@@ -19,7 +19,9 @@ from .serializers import panoramas_geo_serializer,sequences_serializer, panorama
 from .permissions import baseAPIPermission
 
 #@login_required(login_url='/login/?next=/viewer/')
-def viewer(request, pano_id):
+def viewer(request, pano_id = ''):
+    if not pano_id:
+        pano_id = "0329a9dd-6c57-4af0-a347-ba1133a6094c"
     return render(request, 'index.html', {'pano_id': pano_id})
 
 class basePagination(PageNumberPagination):
