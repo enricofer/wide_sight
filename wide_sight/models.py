@@ -68,7 +68,7 @@ class panoramas(DirtyFieldsMixin, models.Model):
                                       format='JPEG',
                                       options={'quality': 60})
     geom = models.PointField(srid=4326, blank=True, null=True, geography=True)
-    sequence = models.ForeignKey('sequences', on_delete=models.PROTECT)
+    sequence = models.ForeignKey('sequences', on_delete=models.CASCADE)
     lon = models.FloatField(blank=True, null=True)
     lat = models.FloatField(blank=True, null=True)
     utm_x = models.FloatField(blank=True, null=True)
