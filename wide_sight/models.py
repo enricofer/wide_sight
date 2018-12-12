@@ -48,7 +48,7 @@ class sequences(models.Model):
 
 @receiver(pre_delete, sender=sequences)
 def delete_sequence(sender, instance, **kwargs):
-    os.rmdir(os.path.join(settings.MEDIA_ROOT,instance.uuid))
+    os.rmdir(os.path.join(settings.MEDIA_ROOT,'panos',str(instance.id)))
 
 class panoramas(DirtyFieldsMixin, models.Model):
 
@@ -147,8 +147,11 @@ def sync_geom(sender, instance,  **kwargs):
 @receiver(pre_delete, sender=panoramas)
 def delete_panorama(sender, instance, **kwargs):
     print ("REMOVING",instance.eqimage.name, file=sys.stderr)
-    os.remove(os.path.join(settings.MEDIA_ROOT,instance.eqimage.name))
-    update_sequence(instance.sequence, exclude=instance)
+    try:
+        os.remove(os.path.join(settings.MEDIA_ROOT,instance.eqimage.name))
+        update_sequence(instance.sequence, exclude=instance)
+    except Exception as e:
+        print ("error: ", e, file=sys.stderr)
 
 class image_object_types(models.Model):
     type = models.CharField(max_length=20,blank=True)
