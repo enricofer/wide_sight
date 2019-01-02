@@ -166,11 +166,12 @@ class image_objects(models.Model):
         (1,'tag'),
         (2,'map positioning'),
         (3,'stereo interpretation'),
-        (4,'road intersection'),
+        (4,'visual intersection'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sample_type = models.ForeignKey('image_object_types', on_delete=models.PROTECT,blank=True, null=True)
+    type = models.IntegerField(choices=sample_type_choice)
     panorama = models.ForeignKey('panoramas', on_delete=models.CASCADE)
     match = models.ManyToManyField("self",blank=True)
     img_lat = models.FloatField(blank=True, null=True)
