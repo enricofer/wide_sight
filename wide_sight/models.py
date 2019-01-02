@@ -163,20 +163,21 @@ class image_object_types(models.Model):
 class image_objects(models.Model):
 
     sample_type_choice = (
-        (1,'panorama sampling'),
-        (2,'road intersection'),
-        (3,'map positioning'),
-        (4,'stereo interpretation'),
+        (1,'tag'),
+        (2,'map positioning'),
+        (3,'stereo interpretation'),
+        (4,'road intersection'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    type = models.ForeignKey('image_object_types', on_delete=models.PROTECT)
+    sample_type = models.ForeignKey('image_object_types', on_delete=models.PROTECT,blank=True, null=True)
     panorama = models.ForeignKey('panoramas', on_delete=models.CASCADE)
-    match = models.ManyToManyField("self")
-    img_lat = models.IntegerField()
-    img_lon = models.IntegerField()
-    width = models.IntegerField(blank=True)
-    height = models.IntegerField(blank=True)
+    match = models.ManyToManyField("self",blank=True)
+    img_lat = models.FloatField(blank=True, null=True)
+    img_lon = models.FloatField(blank=True, null=True)
+    geom_on_panorama = models.TextField(blank=True) #jsonfield representing a geometry traced on panorama
+    width = models.IntegerField(blank=True, null=True)
+    height = models.IntegerField(blank=True, null=True)
     lon = models.FloatField(blank=True, null=True)
     lat = models.FloatField(blank=True, null=True)
     utm_x = models.FloatField(blank=True, null=True)
@@ -185,7 +186,6 @@ class image_objects(models.Model):
     utm_srid = models.IntegerField(blank=True, null=True)
     elevation = models.FloatField(blank=True, null=True)
     accurancy = models.FloatField(blank=True, null=True)
-    sample_type = models.IntegerField(choices=sample_type_choice)
     note = models.CharField(max_length=50,blank=True)
     user_data = models.TextField(blank=True) #user data json store
     sampling_data = models.DateField()
