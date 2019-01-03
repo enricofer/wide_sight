@@ -190,7 +190,7 @@ class image_objects(models.Model):
     note = models.CharField(max_length=50,blank=True)
     user_data = models.TextField(blank=True) #user data json store
     sampling_data = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True)
-    creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
+    creator_key = models.ForeignKey('appkeys', on_delete=models.PROTECT)
 
     class Meta:
         verbose_name_plural = "Image_objects"
