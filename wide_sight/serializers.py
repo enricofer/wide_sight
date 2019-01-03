@@ -5,7 +5,7 @@ from rest_framework import serializers
 from django.contrib.gis.geos import GEOSGeometry, Point
 from rest_framework.reverse import reverse
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from .models import sequences, panoramas, image_object_types, image_objects, userkeys
+from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
 
 class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSerializer ModelSerializer
 
@@ -115,3 +115,8 @@ class userkeys_serializer(serializers.ModelSerializer):
     class Meta:
         model = userkeys
         fields = ('user', 'key', 'app_keys', 'pk', 'context')
+
+class appkeys_serializer(serializers.ModelSerializer):
+    class Meta:
+        model = appkeys
+        fields = ('app_name', 'key', 'api_key')

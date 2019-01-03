@@ -15,7 +15,7 @@ from rest_framework.exceptions import APIException
 from rest_condition import Or
 
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
-from .serializers import panoramas_geo_serializer,sequences_serializer, panoramas_serializer, image_object_types_serializer, image_objects_serializer, userkeys_serializer
+from .serializers import panoramas_geo_serializer,sequences_serializer, panoramas_serializer, image_object_types_serializer, image_objects_serializer, userkeys_serializer, appkeys_serializer
 from .permissions import baseAPIPermission
 
 #@login_required(login_url='/login/?next=/viewer/')
@@ -134,5 +134,15 @@ class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = userkeys.objects.all()
     serializer_class = userkeys_serializer
-    permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+    permission_classes = ( IsAuthenticated,)
+    pagination_class = basePagination
+
+
+class apikeysViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = appkeys.objects.all()
+    serializer_class = appkeys_serializer
+    permission_classes = ( IsAuthenticated,)
     pagination_class = basePagination

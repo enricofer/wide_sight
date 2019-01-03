@@ -23,7 +23,7 @@ from django.conf.urls import url, include
 from rest_framework import routers
 
 
-from wide_sight.views import viewer, sequencesViewSet, panoramasViewSet, image_object_typesViewSet, image_objectsViewSet, userkeysViewSet
+from wide_sight.views import viewer, sequencesViewSet, panoramasViewSet, image_object_typesViewSet, image_objectsViewSet, userkeysViewSet, apikeysViewSet
 
 router = routers.DefaultRouter()
 router.register(r'sequences', sequencesViewSet)
@@ -31,6 +31,7 @@ router.register(r'panoramas', panoramasViewSet)
 router.register(r'image_object_types', image_object_typesViewSet)
 router.register(r'image_objects', image_objectsViewSet)
 router.register(r'userkeys', userkeysViewSet)
+router.register(r'apikeys', apikeysViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
