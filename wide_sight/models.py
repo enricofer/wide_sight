@@ -208,7 +208,7 @@ class appkeys(models.Model):
         app_label = 'wide_sight'
 
     def __str__(self):
-        return '%s_%s' % (self.app_name,self.api_key)
+        return '%s_%s' % (self.app_name,self.key)
 
 @receiver(post_save, sender=appkeys)
 def get_APIkey(sender, instance,  **kwargs):
