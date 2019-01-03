@@ -109,7 +109,26 @@ class image_object_types_serializer(serializers.ModelSerializer):
 class image_objects_serializer(serializers.ModelSerializer):
     class Meta:
         model = image_objects
-        fields = ('id', 'type', 'sample_type', 'geom_on_panorama','panorama', 'match', 'img_lat', 'img_lon', 'width', 'height', 'lon', 'lat', 'elevation', 'accurancy', 'note', 'user_data', 'sampling_data', 'creator')
+        fields = (
+            'id',
+            'type' ,
+            'creator_key',
+            'sample_type',
+            'geom_on_panorama',
+            'panorama',
+            'match',
+            'img_lat',
+            'img_lon',
+            'width',
+            'height',
+            'lon',
+            'lat',
+            'elevation',
+            'accurancy',
+            'note',
+            'user_data',
+            'sampling_data'
+        )
 
 class userkeys_serializer(serializers.ModelSerializer):
     class Meta:
