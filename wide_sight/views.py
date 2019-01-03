@@ -127,6 +127,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
     pagination_class = basePagination
     filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('panorama', 'id', )
 
 
 class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
