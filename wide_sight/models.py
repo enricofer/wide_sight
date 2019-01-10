@@ -33,7 +33,7 @@ class sequences(models.Model):
     title = models.CharField(max_length=50)
     geom = models.MultiPointField(srid=4326, blank=True, null=True)
     shooting_data = models.DateField(default=datetime.date.today, blank=True)
-    height_from_ground = models.FloatField(blank=True, null=True)
+    height_from_ground = models.FloatField(blank=True, null=True, default=2)
     creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
     note = models.CharField(max_length=50,blank=True)
 
@@ -160,11 +160,11 @@ class image_object_types(models.Model):
         verbose_name_plural = "Image_object_types"
         verbose_name = "Image_object_type"
 
-class image_objects(models.Model):
+class image_objects(DirtyFieldsMixin, models.Model):
 
     sample_type_choice = (
         (1,'tag'),
-        (2,'map positioning'),
+        (2,'map spot'),
         (3,'stereo interpretation'),
         (4,'visual intersection'),
     )
@@ -191,11 +191,20 @@ class image_objects(models.Model):
     user_data = models.TextField(blank=True) #user data json store
     sampling_data = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True)
     creator_key = models.ForeignKey('appkeys', on_delete=models.CASCADE)
+    geom = models.PointField(srid=4326, blank=True, null=True, geography=True)
 
     class Meta:
         verbose_name_plural = "Image_objects"
         verbose_name = "Image_object"
         app_label = 'wide_sight'
+
+    def save(self, *args, **kwargs):
+        if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
+            self.geom = Point(self.lon,self.lat)
+        else:
+            self.geom = GEOSGeometry('POINT EMPTY', srid=4326)
+        super(image_objects,self).save(*args, **kwargs)
+
 
 class appkeys(models.Model):
     app_name = models.CharField(max_length=50)

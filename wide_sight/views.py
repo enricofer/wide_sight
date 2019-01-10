@@ -15,7 +15,15 @@ from rest_framework.exceptions import APIException
 from rest_condition import Or
 
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
-from .serializers import panoramas_geo_serializer,sequences_serializer, panoramas_serializer, image_object_types_serializer, image_objects_serializer, userkeys_serializer, appkeys_serializer
+from .serializers import (  panoramas_geo_serializer,
+                            sequences_serializer,
+                            panoramas_serializer,
+                            image_object_types_serializer,
+                            image_objects_serializer,
+                            image_objects_geo_serializer,
+                            userkeys_serializer,
+                            appkeys_serializer)
+
 from .permissions import baseAPIPermission
 
 #@login_required(login_url='/login/?next=/viewer/')
@@ -126,9 +134,17 @@ class image_objectsViewSet(viewsets.ModelViewSet):
     serializer_class = image_objects_serializer
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
     pagination_class = basePagination
-    filter_backends = (DjangoFilterBackend,)
+    distance_filter_field = 'geom'
+    bbox_filter_field = 'geom'
+    filter_backends = (DjangoFilterBackend, DistanceToPointFilter, InBBoxFilter)
     filterset_fields = ('panorama', 'id', 'type')
 
+    def get_queryset(self):
+        as_geojson = self.request.query_params.get('as_geojson', None)
+        if as_geojson:
+            self.serializer_class = image_objects_geo_serializer
+            self.pagination_class = GeoJsonPagination
+        return self.queryset
 
 class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
     """

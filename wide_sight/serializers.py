@@ -127,7 +127,33 @@ class image_objects_serializer(serializers.ModelSerializer):
             'accurancy',
             'note',
             'user_data',
-            'sampling_data'
+            'sampling_data',
+        )
+
+class image_objects_geo_serializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = image_objects
+        geo_field = "geom"
+        fields = (
+            'id',
+            'type' ,
+            'creator_key',
+            'sample_type',
+            'geom_on_panorama',
+            'panorama',
+            'match',
+            'img_lat',
+            'img_lon',
+            'width',
+            'height',
+            'lon',
+            'lat',
+            'elevation',
+            'accurancy',
+            'note',
+            'user_data',
+            'sampling_data',
+            'geom',
         )
 
 class userkeys_serializer(serializers.ModelSerializer):
