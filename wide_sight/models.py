@@ -199,7 +199,7 @@ class image_objects(DirtyFieldsMixin, models.Model):
         app_label = 'wide_sight'
 
     def save(self, *args, **kwargs):
-        if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
+        if self.type == 2:
             self.geom = Point(self.lon,self.lat)
         else:
             self.geom = GEOSGeometry('POINT EMPTY', srid=4326)
