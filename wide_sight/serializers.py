@@ -14,7 +14,7 @@ class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSeriali
         model = sequences
         read_only_fields = ('id', 'geom', 'shooting_data',)
         geo_field = "geom"
-        fields = ('id', 'title', 'geom', 'shooting_data', 'creator', 'note')
+        fields = ('id', 'title', 'geom', 'shooting_data', 'creator_key', 'note')
 
 
 class panoramas_serializer(serializers.ModelSerializer):
