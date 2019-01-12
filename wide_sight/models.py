@@ -23,6 +23,12 @@ from .exif_gps import get_exif_values, set_heading_tag
 from .utils import get_utm_srid_from_lonlat
 
 
+sample_type_choice = (
+    (1,'tag'),
+    (2,'map spot'),
+    (3,'stereo interpretation'),
+    (4,'visual intersection'),
+)
 
 def validate_file_extension(value):
     if value.file.content_type == 'image/jpeg':
@@ -34,7 +40,7 @@ class sequences(models.Model):
     geom = models.MultiPointField(srid=4326, blank=True, null=True)
     shooting_data = models.DateField(default=datetime.date.today, blank=True)
     height_from_ground = models.FloatField(blank=True, null=True, default=2)
-    creator = models.ForeignKey('userkeys', on_delete=models.PROTECT)
+    creator_key = models.ForeignKey('appkeys', on_delete=models.PROTECT) #model.SET_DEFAULT to a default superuser
     note = models.CharField(max_length=50,blank=True)
 
     class Meta:
@@ -155,20 +161,14 @@ def delete_panorama(sender, instance, **kwargs):
 
 class image_object_types(models.Model):
     type = models.CharField(max_length=20,blank=True)
+    for_type = models.IntegerField(choices=sample_type_choice)
+    color = models.CharField(max_length=20,blank=True)
 
     class Meta:
         verbose_name_plural = "Image_object_types"
         verbose_name = "Image_object_type"
 
 class image_objects(DirtyFieldsMixin, models.Model):
-
-    sample_type_choice = (
-        (1,'tag'),
-        (2,'map spot'),
-        (3,'stereo interpretation'),
-        (4,'visual intersection'),
-    )
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sample_type = models.ForeignKey('image_object_types', on_delete=models.PROTECT,blank=True, null=True)
     type = models.IntegerField(choices=sample_type_choice)

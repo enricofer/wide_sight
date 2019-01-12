@@ -117,7 +117,7 @@ class panoramasViewSet(viewsets.ModelViewSet):
         return self.queryset
 
 
-class image_object_typesViewSet(viewsets.ReadOnlyModelViewSet):
+class image_object_typesViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """

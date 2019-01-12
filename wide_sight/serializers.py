@@ -104,7 +104,7 @@ class panoramas_geo_serializer(GeoFeatureModelSerializer):
 class image_object_types_serializer(serializers.ModelSerializer):
     class Meta:
         model = image_object_types
-        fields = ('type','pk')
+        fields = ('type','pk, 'for_type', 'color')
 
 class image_objects_serializer(serializers.ModelSerializer):
     class Meta:
