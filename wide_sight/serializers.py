@@ -28,9 +28,9 @@ class panoramas_serializer(serializers.ModelSerializer):
         else:
             return None
 
-    creator = serializers.SerializerMethodField()
-    def get_creator(self,obj):
-        return obj.sequence.creator.pk
+    #creator = serializers.SerializerMethodField()
+    #def get_creator(self,obj):
+    #    return obj.sequence.creator.pk
 
     height_from_ground = serializers.SerializerMethodField()
     def get_height_from_ground(self,obj):
@@ -46,7 +46,7 @@ class panoramas_serializer(serializers.ModelSerializer):
             'geom',
             #'utm_geom',
             'sequence',
-            'creator',
+            #'creator',
             'shooting_time',
             'lon',
             'lat',
