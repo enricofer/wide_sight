@@ -51,7 +51,11 @@ class sequences(models.Model):
 
     def __str__(self):
         return '%s_%s' % (str(self.id),self.title)
-
+    
+    def creator(self): #throw exception
+        creator = self.creator_key.userkeys_set.all().first().user.username
+        return creator
+        
 @receiver(pre_delete, sender=sequences)
 def delete_sequence(sender, instance, **kwargs):
     os.rmdir(os.path.join(settings.MEDIA_ROOT,'panos',str(instance.id)))
@@ -118,6 +122,7 @@ class panoramas(DirtyFieldsMixin, models.Model):
         super(panoramas,self).save(*args, **kwargs)
         update_sequence(self.sequence)
         #if (self.lon and 'lon' in self.get_dirty_fields()) or (self.lat and 'lat' in self.get_dirty_fields()):
+
 
 def update_sequence(seq, exclude=None):
     imgs_in_sequence = panoramas.objects.filter(sequence=seq).order_by('shooting_time')

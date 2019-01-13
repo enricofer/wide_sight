@@ -9,12 +9,14 @@ from .models import sequences, panoramas, image_object_types, image_objects, use
 
 class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSerializer ModelSerializer
 
-    creator = serializers.PrimaryKeyRelatedField(queryset=userkeys.objects.all()) #HyperlinkedRelatedField(queryset=userkeys.objects.all(),view_name='sequencesViewSet') #serializers.PrimaryKeyRelatedField(queryset=userkeys.objects.all())
     class Meta:
         model = sequences
-        read_only_fields = ('id', 'geom', 'shooting_data',)
+        read_only_fields = ('id', 'geom', 'shooting_data', 'creator')
         geo_field = "geom"
         fields = ('id', 'title', 'geom', 'shooting_data', 'creator_key', 'note')
+        extra_kwargs = {
+            'creator_key': {'write_only': True},
+        }
 
 
 class panoramas_serializer(serializers.ModelSerializer):
@@ -69,10 +71,6 @@ class panoramas_serializer(serializers.ModelSerializer):
 
 class panoramas_geo_serializer(GeoFeatureModelSerializer):
 
-    creator = serializers.SerializerMethodField()
-    def get_creator(self,obj):
-        return obj.sequence.creator.pk
-
     class Meta:
         model = panoramas
         geo_field = "geom"
@@ -82,7 +80,7 @@ class panoramas_geo_serializer(GeoFeatureModelSerializer):
             #'eqimage_thumbnail',
             'geom',
             'sequence',
-            'creator',
+            #'creator',
             'lon',
             'lat',
             'utm_x',
@@ -133,6 +131,9 @@ class image_objects_serializer(serializers.ModelSerializer):
             'user_data',
             'sampling_data',
         )
+        extra_kwargs = {
+            'creator_key': {'write_only': True},
+        }
 
 class image_objects_geo_serializer(GeoFeatureModelSerializer):
     class Meta:
@@ -163,6 +164,9 @@ class image_objects_geo_serializer(GeoFeatureModelSerializer):
             'sampling_data',
             'geom',
         )
+        extra_kwargs = {
+            'creator_key': {'write_only': True},
+        }
 
 class userkeys_serializer(serializers.ModelSerializer):
     class Meta:
