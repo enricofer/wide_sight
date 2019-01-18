@@ -9,13 +9,17 @@ from .models import sequences, panoramas, image_object_types, image_objects, use
 
 class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSerializer ModelSerializer
 
+    creator_name = serializers.SerializerMethodField()
+    def get_creator_name(self,obj):
+        return obj.creator_key.user.username
+
     class Meta:
         model = sequences
-        read_only_fields = ('id', 'geom', 'shooting_data', 'creator')
+        read_only_fields = ('id', 'geom', 'shooting_data',)
         geo_field = "geom"
-        fields = ('id', 'title', 'geom', 'shooting_data', 'creator_key', 'note')
+        fields = ('id', 'title', 'geom', 'shooting_data', 'note', 'creator_name', 'creator_key')
         extra_kwargs = {
-            'creator_key': {'write_only': True},
+            'creator_key': {'write_only': True}
         }
 
 
@@ -30,9 +34,9 @@ class panoramas_serializer(serializers.ModelSerializer):
         else:
             return None
 
-    #creator = serializers.SerializerMethodField()
-    #def get_creator(self,obj):
-    #    return obj.sequence.creator.pk
+    creator_name = serializers.SerializerMethodField()
+    def get_creator_name(self,obj):
+        return obj.sequence.creator_key.user.username
 
     height_from_ground = serializers.SerializerMethodField()
     def get_height_from_ground(self,obj):
@@ -40,7 +44,7 @@ class panoramas_serializer(serializers.ModelSerializer):
 
     class Meta:
         model = panoramas
-        read_only_fields = ('id', 'utm_x', 'utm_y', 'utm_srid', 'utm_code', 'camera_prod', 'camera_model',)
+        read_only_fields = ('id', 'utm_x', 'utm_y', 'utm_srid', 'utm_code', 'camera_prod', 'camera_model')
         fields = (
             'id',
             'eqimage',
@@ -48,7 +52,7 @@ class panoramas_serializer(serializers.ModelSerializer):
             'geom',
             #'utm_geom',
             'sequence',
-            #'creator',
+            'creator_name',
             'shooting_time',
             'lon',
             'lat',
@@ -71,8 +75,13 @@ class panoramas_serializer(serializers.ModelSerializer):
 
 class panoramas_geo_serializer(GeoFeatureModelSerializer):
 
+    creator_name = serializers.SerializerMethodField()
+    def get_creator_name(self,obj):
+        return obj.sequence.creator_key.user.username
+
     class Meta:
         model = panoramas
+        read_only_fields = ('id', 'utm_x', 'utm_y', 'utm_srid', 'utm_code', 'camera_prod', 'camera_model')
         geo_field = "geom"
         fields = (
             'id',
@@ -80,7 +89,7 @@ class panoramas_geo_serializer(GeoFeatureModelSerializer):
             #'eqimage_thumbnail',
             'geom',
             'sequence',
-            #'creator',
+            'creator_name',
             'lon',
             'lat',
             'utm_x',
@@ -105,11 +114,18 @@ class image_object_types_serializer(serializers.ModelSerializer):
         fields = ('type','pk', 'for_type', 'color')
 
 class image_objects_serializer(serializers.ModelSerializer):
+
+    creator_name = serializers.SerializerMethodField()
+    def get_creator_name(self,obj):
+        return obj.creator_key.user.username
+
     class Meta:
         model = image_objects
+        #read_only_fields = ('creator', )
         fields = (
             'id',
             'type' ,
+            'creator_name',
             'creator_key',
             'sample_type',
             'geom_on_panorama',
@@ -132,17 +148,23 @@ class image_objects_serializer(serializers.ModelSerializer):
             'sampling_data',
         )
         extra_kwargs = {
-            'creator_key': {'write_only': True},
+            'creator_key': {'write_only': True}
         }
 
 class image_objects_geo_serializer(GeoFeatureModelSerializer):
+
+    creator_name = serializers.SerializerMethodField()
+    def get_creator_name(self,obj):
+        return obj.creator_key.user.username
+
     class Meta:
         model = image_objects
+        #read_only_fields = ('creator', )
         geo_field = "geom"
         fields = (
             'id',
             'type' ,
-            'creator_key',
+            'creator_name',
             'sample_type',
             'geom_on_panorama',
             'panorama',
@@ -164,9 +186,6 @@ class image_objects_geo_serializer(GeoFeatureModelSerializer):
             'sampling_data',
             'geom',
         )
-        extra_kwargs = {
-            'creator_key': {'write_only': True},
-        }
 
 class userkeys_serializer(serializers.ModelSerializer):
     class Meta:

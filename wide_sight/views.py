@@ -1,6 +1,7 @@
 import sys
 from uuid import UUID
 
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from rest_framework import viewsets, status
@@ -58,6 +59,14 @@ class sequencesViewSet(viewsets.ModelViewSet):
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
     pagination_class = basePagination
     filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('creator_key', )
+
+    def initial(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            self.permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess), ) #Or(baseAPIPermission, HasAPIAccess),
+        else:
+            self.permission_classes = ( IsAuthenticated, )
+        super(sequencesViewSet, self).initial(request, *args, **kwargs)
 
 class panoramasViewSet(viewsets.ModelViewSet):
     """
@@ -70,7 +79,7 @@ class panoramasViewSet(viewsets.ModelViewSet):
     distance_filter_field = 'geom'
     bbox_filter_field = 'geom'
     filter_backends = (DjangoFilterBackend, DistanceToPointFilter, InBBoxFilter)
-    filterset_fields = ('sequence', 'id', )
+    filterset_fields = ('sequence', )
 
 
     def destroy(self, request, *args, **kwargs):
@@ -116,6 +125,13 @@ class panoramasViewSet(viewsets.ModelViewSet):
 
         return self.queryset
 
+    def initial(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            self.permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess), ) #Or(baseAPIPermission, HasAPIAccess),
+        else:
+            self.permission_classes = ( IsAuthenticated, )
+        super(panoramasViewSet, self).initial(request, *args, **kwargs)
+
 
 class image_object_typesViewSet(viewsets.ModelViewSet):
     """
@@ -124,6 +140,13 @@ class image_object_typesViewSet(viewsets.ModelViewSet):
     queryset = image_object_types.objects.all()
     serializer_class = image_object_types_serializer
     permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+
+    def initial(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            self.permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess), ) #Or(baseAPIPermission, HasAPIAccess),
+        else:
+            self.permission_classes = ( IsAuthenticated, )
+        super(image_object_typesViewSet, self).initial(request, *args, **kwargs)
 
 
 class image_objectsViewSet(viewsets.ModelViewSet):
@@ -137,7 +160,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
     distance_filter_field = 'geom'
     bbox_filter_field = 'geom'
     filter_backends = (DjangoFilterBackend, DistanceToPointFilter, InBBoxFilter)
-    filterset_fields = ('panorama', 'id', 'type')
+    filterset_fields = ('panorama', 'type')
 
     def get_queryset(self):
         as_geojson = self.request.query_params.get('as_geojson', None)
@@ -146,14 +169,31 @@ class image_objectsViewSet(viewsets.ModelViewSet):
             self.pagination_class = GeoJsonPagination
         return self.queryset
 
+    def initial(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            self.permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess), ) #Or(baseAPIPermission, HasAPIAccess),
+        else:
+            self.permission_classes = ( IsAuthenticated, )
+        super(image_objectsViewSet, self).initial(request, *args, **kwargs)
+
 class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
     queryset = userkeys.objects.all()
     serializer_class = userkeys_serializer
-    permission_classes = ( IsAuthenticated,)
+    permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
     pagination_class = basePagination
+    filter_backends = (DjangoFilterBackend, )
+    filterset_fields = ('user',)
+
+    def get_queryset(self):
+        username = self.request.query_params.get('username', None)
+        print ("USERNAME QUERYSET: ", username, file=sys.stderr)
+        if username:
+            user_selected = User.objects.get(username=username)
+            self.queryset = self.queryset.filter(user=user_selected)
+        return self.queryset
 
 
 class apikeysViewSet(viewsets.ReadOnlyModelViewSet):

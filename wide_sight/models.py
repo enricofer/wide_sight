@@ -40,7 +40,7 @@ class sequences(models.Model):
     geom = models.MultiPointField(srid=4326, blank=True, null=True)
     shooting_data = models.DateField(default=datetime.date.today, blank=True)
     height_from_ground = models.FloatField(blank=True, null=True, default=2)
-    creator_key = models.ForeignKey('appkeys', on_delete=models.PROTECT) #model.SET_DEFAULT to a default superuser
+    creator_key = models.ForeignKey('userkeys', on_delete=models.PROTECT)
     note = models.CharField(max_length=50,blank=True)
 
     class Meta:
@@ -51,11 +51,7 @@ class sequences(models.Model):
 
     def __str__(self):
         return '%s_%s' % (str(self.id),self.title)
-    
-    def creator(self): #throw exception
-        creator = self.creator_key.userkeys_set.all().first().user.username
-        return creator
-        
+
 @receiver(pre_delete, sender=sequences)
 def delete_sequence(sender, instance, **kwargs):
     os.rmdir(os.path.join(settings.MEDIA_ROOT,'panos',str(instance.id)))
@@ -195,7 +191,7 @@ class image_objects(DirtyFieldsMixin, models.Model):
     note = models.CharField(max_length=50,blank=True)
     user_data = models.TextField(blank=True) #user data json store
     sampling_data = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True)
-    creator_key = models.ForeignKey('appkeys', on_delete=models.CASCADE)
+    creator_key = models.ForeignKey('userkeys', on_delete=models.CASCADE)
     geom = models.PointField(srid=4326, blank=True, null=True, geography=True)
 
     class Meta:
