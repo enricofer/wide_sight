@@ -105,7 +105,8 @@ class panoramas(DirtyFieldsMixin, models.Model):
             print ("%s == %s" %(key, value))
         print ("dirty_fields",self.get_dirty_fields(), file=sys.stderr)
         if self.heading and'heading' in self.get_dirty_fields():
-            set_heading_tag(os.path.join(settings.MEDIA_ROOT,self.eqimage.path),self.heading)
+            pass //following method throws exception
+            #set_heading_tag(os.path.join(settings.MEDIA_ROOT,self.eqimage.path),self.heading)
         if 'eqimage' in self.get_dirty_fields():
             exiftags = exifread.process_file(self.eqimage)
             print ("EXIFTAGS",exiftags, file=sys.stderr)
