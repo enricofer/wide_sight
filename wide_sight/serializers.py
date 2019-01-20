@@ -40,7 +40,7 @@ class panoramas_serializer(serializers.ModelSerializer):
 
     height_from_ground = serializers.SerializerMethodField()
     def get_height_from_ground(self,obj):
-        return obj.elevation or obj.sequence.height_from_ground
+        return obj.height_correction or obj.sequence.height_from_ground
 
     class Meta:
         model = panoramas
@@ -64,6 +64,7 @@ class panoramas_serializer(serializers.ModelSerializer):
             'accurancy',
             'heading',
             'height_from_ground',
+            'height_correction',
             'pitch',
             'roll',
             'fov',

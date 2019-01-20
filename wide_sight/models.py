@@ -92,6 +92,7 @@ class panoramas(DirtyFieldsMixin, models.Model):
     address = models.CharField(max_length=150,blank=True)
     note = models.CharField(max_length=50,blank=True)
     shooting_time = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True)
+    height_correction = models.FloatField(blank=True, null=True)
 
     class Meta:
         verbose_name_plural = "Panoramas"
