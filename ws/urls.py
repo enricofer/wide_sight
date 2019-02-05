@@ -21,9 +21,28 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls import url, include
 from rest_framework import routers
+#from rest_framework.documentation import include_docs_urls
 
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
-from wide_sight.views import viewer, sequencesViewSet, panoramasViewSet, image_object_typesViewSet, image_objectsViewSet, userkeysViewSet, apikeysViewSet
+...
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Widesight API",
+      default_version='v1',
+      description="Test description",
+      terms_of_service="",
+      contact=openapi.Contact(email="enricofer@gmail.com"),
+      license=openapi.License(name="MIT License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
+
+from wide_sight.views import APIRoot, viewer, sequencesViewSet, panoramasViewSet, image_object_typesViewSet, image_objectsViewSet, userkeysViewSet, apikeysViewSet
 
 router = routers.DefaultRouter()
 router.register(r'sequences', sequencesViewSet)
@@ -37,8 +56,16 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^viewer/$', viewer, name='viewer'),
     url(r'^viewer/([-\w]+)/$', viewer, name='viewer'),
+    url(r'^$', APIRoot.as_view()),
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+    url(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    url(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+    #url(r"^docs/", include_docs_urls(title="Widesight API", authentication_classes=[],permission_classes=[])),
+    #url(r'^', include('drf_autodocs.urls')),
 
 
     #url(r'^login/', login,{'template_name': 'registration/login.html'},name='cdu_login'),

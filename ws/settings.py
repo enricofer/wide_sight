@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_api_key',
     'django_filters',
     'wide_sight',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -66,7 +67,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -96,7 +97,7 @@ REST_FRAMEWORK = {
 
 SPATIALITE_LIBRARY_PATH = '/usr/lib/i386-linux-gnu/mod_spatialite.so' #blob
 SPATIALITE_LIBRARY_PATH = 'mod_spatialite.so' #ubuntu-asus
-#SPATIALITE_LIBRARY_PATH = '/usr/lib/i386-linux-gnu/libspatialite.so' #urb
+SPATIALITE_LIBRARY_PATH = '/usr/lib/i386-linux-gnu/libspatialite.so' #urb
 
 DATABASES = {
     'default': {

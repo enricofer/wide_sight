@@ -4,7 +4,7 @@ django-imagekit==4.0.2
 djangorestframework==3.8.2
 djangorestframework-gis==0.13
 ExifRead==2.1.2
-pygdal
+#pygdal
 #GDAL
 numpy==1.15.1
 pilkit==2.0
@@ -20,3 +20,5 @@ django-dirtyfields
 django-filter
 utm
 django-cors-headers
+coreapi
+drf-yasg

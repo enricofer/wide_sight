@@ -18,6 +18,7 @@ from django.contrib.gis.geos import Point
 from rest_framework_api_key.models import APIKey
 from rest_framework_api_key.helpers import generate_key
 from dirtyfields import DirtyFieldsMixin
+from django.utils.translation import ugettext_lazy as _ 
 
 from .exif_gps import get_exif_values, set_heading_tag
 from .utils import get_utm_srid_from_lonlat
@@ -35,13 +36,13 @@ def validate_file_extension(value):
         raise ValidationError(u'File not allowed: invalid extension')
 
 class sequences(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=50)
-    geom = models.MultiPointField(srid=4326, blank=True, null=True)
-    shooting_data = models.DateField(default=datetime.date.today, blank=True)
-    height_from_ground = models.FloatField(blank=True, null=True, default=2)
-    creator_key = models.ForeignKey('userkeys', on_delete=models.PROTECT)
-    note = models.CharField(max_length=50,blank=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, help_text=_("unique alphanumeric identifier"))
+    title = models.CharField(max_length=50, help_text=_("sequence title string"))
+    geom = models.MultiPointField(srid=4326, blank=True, null=True, help_text=_("geometry containing all related panorama positions"))
+    shooting_data = models.DateField(default=datetime.date.today, blank=True, help_text=_("date of shooting (default today)"))
+    height_from_ground = models.FloatField(blank=True, null=True, default=2, help_text=_("height from the ground of the camera. can be overidden in single panorama setting"))
+    creator_key = models.ForeignKey('userkeys', on_delete=models.PROTECT, help_text=_("the userkey of the sequence creator"))
+    note = models.CharField(max_length=50,blank=True, help_text=_("free notes about the sequence"))
 
     class Meta:
         verbose_name_plural = "Sequences"
@@ -67,32 +68,32 @@ class panoramas(DirtyFieldsMixin, models.Model):
             os.makedirs(os_path)
         return os.path.join(rel_path, f_name)
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    eqimage = models.ImageField(upload_to=upload_img)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, help_text=_("unique alphanumeric identifier"))
+    eqimage = models.ImageField(upload_to=upload_img, help_text=_("equirectangular image path"))
     eqimage_thumbnail = ImageSpecField(source='eqimage',
                                       processors=[ResizeToFill(480, 240)],
                                       format='JPEG',
                                       options={'quality': 60})
-    geom = models.PointField(srid=4326, blank=True, null=True, geography=True)
-    sequence = models.ForeignKey('sequences', on_delete=models.CASCADE)
-    lon = models.FloatField(blank=True, null=True)
-    lat = models.FloatField(blank=True, null=True)
-    utm_x = models.FloatField(blank=True, null=True)
-    utm_y = models.FloatField(blank=True, null=True)
-    utm_code = models.CharField(max_length=3,blank=True)
-    utm_srid = models.IntegerField(blank=True, null=True)
-    elevation = models.FloatField(blank=True, null=True)
-    accurancy = models.FloatField(blank=True, null=True)
-    heading = models.FloatField(blank=True, null=True)
-    pitch = models.FloatField(blank=True, null=True)
-    roll = models.FloatField(blank=True, null=True)
-    fov = models.FloatField(blank=True, null=True)
-    camera_prod = models.CharField(max_length=50,blank=True, null=True)
-    camera_model = models.CharField(max_length=50,blank=True, null=True)
-    address = models.CharField(max_length=150,blank=True)
-    note = models.CharField(max_length=50,blank=True)
-    shooting_time = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True)
-    height_correction = models.FloatField(blank=True, null=True)
+    geom = models.PointField(srid=4326, blank=True, null=True, geography=True, help_text=_("geometry location of the panorama"))
+    sequence = models.ForeignKey('sequences', on_delete=models.CASCADE, help_text=_("sequence id to which panorama belongs"))
+    lon = models.FloatField(blank=True, null=True, help_text=_("decimal longitude of the panorama"))
+    lat = models.FloatField(blank=True, null=True, help_text=_("decimal latitude of the panorama"))
+    utm_x = models.FloatField(blank=True, null=True, help_text=_("UTM projected coordinate x in meters"))
+    utm_y = models.FloatField(blank=True, null=True, help_text=_("UTM projected coordinate y in meters"))
+    utm_code = models.CharField(max_length=3,blank=True, help_text=_("UTM zone code"))
+    utm_srid = models.IntegerField(blank=True, null=True, help_text=_("UTM srid code"))
+    elevation = models.FloatField(blank=True, null=True, help_text=_("elevation over the sealevel of the panorama location"))
+    accurancy = models.FloatField(blank=True, null=True, help_text=_("accurancy of theh panorama location"))
+    heading = models.FloatField(blank=True, null=True, help_text=_("heading of the camera expressed in clockwise decimal degrees from north"))
+    pitch = models.FloatField(blank=True, null=True, help_text=_("pitch angle of the camera"))
+    roll = models.FloatField(blank=True, null=True, help_text=_("roll angle of the camera"))
+    fov = models.FloatField(blank=True, null=True, help_text=_("Field of view of the camera"))
+    camera_prod = models.CharField(max_length=50,blank=True, null=True, help_text=_("Camera producer (from EXIF)"))
+    camera_model = models.CharField(max_length=50,blank=True, null=True, help_text=_("Camera model (from EXIF)"))
+    address = models.CharField(max_length=150,blank=True, help_text=_("Geolocated address (not yet implemented)"))
+    note = models.CharField(max_length=50,blank=True, help_text=_("Free text annotation on panorama"))
+    shooting_time = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True, help_text=_("Datetime instant of panorama shot"))
+    height_correction = models.FloatField(blank=True, null=True, help_text=_("Correction of sequence height from ground"))
 
     class Meta:
         verbose_name_plural = "Panoramas"
@@ -172,29 +173,29 @@ class image_object_types(models.Model):
         verbose_name = "Image_object_type"
 
 class image_objects(DirtyFieldsMixin, models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sample_type = models.ForeignKey('image_object_types', on_delete=models.PROTECT,blank=True, null=True)
-    type = models.IntegerField(choices=sample_type_choice)
-    panorama = models.ForeignKey('panoramas', on_delete=models.CASCADE)
-    match = models.ManyToManyField("self",blank=True)
-    img_lat = models.FloatField(blank=True, null=True)
-    img_lon = models.FloatField(blank=True, null=True)
-    geom_on_panorama = models.TextField(blank=True) #jsonfield representing a geometry traced on panorama
-    width = models.IntegerField(blank=True, null=True)
-    height = models.IntegerField(blank=True, null=True)
-    lon = models.FloatField(blank=True, null=True)
-    lat = models.FloatField(blank=True, null=True)
-    utm_x = models.FloatField(blank=True, null=True)
-    utm_y = models.FloatField(blank=True, null=True)
-    utm_code = models.CharField(max_length=3,blank=True)
-    utm_srid = models.IntegerField(blank=True, null=True)
-    elevation = models.FloatField(blank=True, null=True)
-    accurancy = models.FloatField(blank=True, null=True)
-    note = models.CharField(max_length=50,blank=True)
-    user_data = models.TextField(blank=True) #user data json store
-    sampling_data = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True)
-    creator_key = models.ForeignKey('userkeys', on_delete=models.CASCADE)
-    geom = models.PointField(srid=4326, blank=True, null=True, geography=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, help_text=_("unique alphanumeric identifier"))
+    sample_type = models.ForeignKey('image_object_types', on_delete=models.PROTECT,blank=True, null=True, help_text=_("User-defined Image object type"))
+    type = models.IntegerField(choices=sample_type_choice, help_text=_("Application image object type (1:tag, 2:map_spot, 3:stereo interpretation, 4:visual intersection, ... more will come)"))
+    panorama = models.ForeignKey('panoramas', on_delete=models.CASCADE, help_text=_("Panorama id to which image object belongs "))
+    match = models.ManyToManyField("self",blank=True, help_text=_("matching id of other related image objects (not yet used)"))
+    img_lat = models.FloatField(blank=True, null=True, help_text=_("image object latitude on equirectangular panorama image"))
+    img_lon = models.FloatField(blank=True, null=True, help_text=_("image object longitude on equirectangular panorama image"))
+    geom_on_panorama = models.TextField(blank=True, help_text=_("geometry trace of image object as array of longitude/latitude points on equirectangular panorama image")) #jsonfield representing a geometry traced on panorama
+    width = models.IntegerField(blank=True, null=True, help_text=_("graphic width of image object"))
+    height = models.IntegerField(blank=True, null=True, help_text=_("height from ground of geo-located image object"))
+    lon = models.FloatField(blank=True, null=True, help_text=_("longitude of geo-located image object"))
+    lat = models.FloatField(blank=True, null=True, help_text=_("latitude of geo-located image object"))
+    utm_x = models.FloatField(blank=True, null=True, help_text=_("UTM projected x of geo-located image object"))
+    utm_y = models.FloatField(blank=True, null=True, help_text=_("UTM projected y of geo-located image object"))
+    utm_code = models.CharField(max_length=3,blank=True, help_text=_("UTM zone code related to geo-located image object position"))
+    utm_srid = models.IntegerField(blank=True, null=True, help_text=_("UTM srid related to geo-located image object position"))
+    elevation = models.FloatField(blank=True, null=True, help_text=_("elevation from sea level of geo-located image object"))
+    accurancy = models.FloatField(blank=True, null=True, help_text=_("accurancy of geo-located image object position"))
+    note = models.CharField(max_length=50,blank=True, help_text=_("User textual notes on image object"))
+    user_data = models.TextField(blank=True, help_text=_("json field structured user data related to image object (not yet implemented)")) #user data json store
+    sampling_data = models.DateTimeField(default=datetime.datetime.now, blank=True, null=True, help_text=_("Datetime instant of image object recognition"))
+    creator_key = models.ForeignKey('userkeys', on_delete=models.CASCADE, help_text=_("Userkey id of the of image object creator"))
+    geom = models.PointField(srid=4326, blank=True, null=True, geography=True, help_text=_("Point Geometry of geo-located image object"))
 
     class Meta:
         verbose_name_plural = "Image_objects"
@@ -210,8 +211,8 @@ class image_objects(DirtyFieldsMixin, models.Model):
 
 
 class appkeys(models.Model):
-    app_name = models.CharField(max_length=50)
-    key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    app_name = models.CharField(max_length=50, help_text=_("Name of the sallowed application"))
+    key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, help_text=_("unique alphanumeric identifier"))
     api_key = models.CharField(max_length=60, null=True, blank=True)
 
     class Meta:
@@ -233,10 +234,10 @@ class userkeys(models.Model):
     '''
     https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
     '''
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    app_keys = models.ManyToManyField(appkeys)
-    context = models.MultiPolygonField(srid=4326, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, help_text=_("User id to which the userkey is related"))
+    key = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, help_text=_("unique alphanumeric identifier"))
+    app_keys = models.ManyToManyField(appkeys, help_text=_("Application key authorized related to the userkey"))
+    context = models.MultiPolygonField(srid=4326, null=True, blank=True, help_text=_("geometry of polygonal context in which userkey can operate on service"))
 
     class Meta:
         verbose_name_plural = "Userkeys"
