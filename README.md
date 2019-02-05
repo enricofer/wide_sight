@@ -46,4 +46,4 @@ The service manage listing , creation and editing of three five sets of objects:
 
   - appkeys: allowed application keys (needed for GET method without user authorization)
 
-the complete API reference is available at [docs/API.html](http://htmlpreview.github.com/?https://github.com/enricofer/wide_sight/master/docs/API.htm)
+the complete API reference is available at [docs/API.html](https://app.swaggerhub.com/apis-docs/enricofer/Widesight/1.0.0)
