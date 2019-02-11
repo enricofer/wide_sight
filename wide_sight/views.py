@@ -10,23 +10,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_api_key.permissions import HasAPIAccess
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import BaseFilterBackend
 from rest_framework_gis.filters import DistanceToPointFilter, InBBoxFilter
 from rest_framework_gis.pagination import GeoJsonPagination
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.reverse import reverse
 from rest_condition import Or
-
-from django.utils.decorators import method_decorator
-from drf_yasg import openapi
-from drf_yasg.app_settings import swagger_settings
-from drf_yasg.inspectors import CoreAPICompatInspector, FieldInspector, NotHandled, SwaggerAutoSchema
-from drf_yasg.utils import no_body, swagger_auto_schema
-
-from rest_framework.compat import (
-    coreapi, coreschema, distinct,
-)
+from drf_autodocs.decorators import format_docstring
 
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
 from .serializers import (  panoramas_geo_serializer,
@@ -46,40 +36,17 @@ def viewer(request, pano_id = ''):
         pano_id = "0329a9dd-6c57-4af0-a347-ba1133a6094c"
     return render(request, 'index.html', {'pano_id': pano_id})
 
-apikey_param = openapi.Parameter('apikey', openapi.IN_QUERY, description="Allowed application uuid apikey", type=openapi.TYPE_STRING)
-asgeojson_param = openapi.Parameter('as_geojson', openapi.IN_QUERY, description="Change output to geojson format", type=openapi.TYPE_BOOLEAN)
-
-
-class DjangoFilterDescriptionInspector(CoreAPICompatInspector):
-    def get_filter_parameters(self, filter_backend):
-        print ("filter_backend",filter_backend, super(DjangoFilterDescriptionInspector, self).get_filter_parameters(filter_backend), file=sys.stderr)
-        if isinstance(filter_backend, DjangoFilterBackend):
-            result = super(DjangoFilterDescriptionInspector, self).get_filter_parameters(filter_backend)
-            for param in result:
-                print ("filter_param", param, file=sys.stderr)
-                if not param.get('description', ''):
-                    param.description = "Filter the returned list by {field_name}".format(field_name=param.name)
-            return result
-        return NotHandled
-
-
 class basePagination(PageNumberPagination):
     page_size = 100
     page_size_query_param = 'page_size'
     max_page_size = 10000
 
-
-@method_decorator(name='list', decorator=swagger_auto_schema(
-    operation_description="description from swagger_auto_schema via method_decorator",
-    filter_inspectors=[DjangoFilterDescriptionInspector],
-    manual_parameters=[apikey_param],
-))
 class sequencesViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows to be view or edit sequences of panorama images.
 
     get:
-    Return a list of all the existing sequences.
+    List sequences matching url parameters.
 
     post:
     Create a new sequence instance.
@@ -88,7 +55,7 @@ class sequencesViewSet(viewsets.ModelViewSet):
     edit and update an existing sequence.
 
     delete:
-    permanently delete an existing empty sequence.
+    permanently delete an existing sequence.
     """
     queryset = sequences.objects.all()
     serializer_class = sequences_serializer
@@ -104,17 +71,13 @@ class sequencesViewSet(viewsets.ModelViewSet):
             self.permission_classes = ( IsAuthenticated, )
         super(sequencesViewSet, self).initial(request, *args, **kwargs)
 
-@method_decorator(name='list', decorator=swagger_auto_schema(
-    operation_description="description from swagger_auto_schema via method_decorator",
-    filter_inspectors=[DjangoFilterDescriptionInspector],
-    manual_parameters=[asgeojson_param,apikey_param],
-))
+@format_docstring()
 class panoramasViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows to be view or edit panorama equirectangular images.
+    API endpoint that allows to be view or edit panoramas.
 
     get:
-    Return a list of all the existing panoramas.
+    List panoramas matching url parameters.
 
     post:
     Create a new panorama instance.
@@ -123,7 +86,7 @@ class panoramasViewSet(viewsets.ModelViewSet):
     edit and update an existing panorama.
 
     delete:
-    permanently delete an existing empty panorama.
+    permanently delete an existing panorama.
     """
     queryset = panoramas.objects.all()
     serializer_class = panoramas_serializer
@@ -185,26 +148,22 @@ class panoramasViewSet(viewsets.ModelViewSet):
             self.permission_classes = ( IsAuthenticated, )
         super(panoramasViewSet, self).initial(request, *args, **kwargs)
 
-@method_decorator(name='list', decorator=swagger_auto_schema(
-    operation_description="description from swagger_auto_schema via method_decorator",
-    filter_inspectors=[DjangoFilterDescriptionInspector],
-    manual_parameters=[apikey_param],
-))
+
 class image_object_typesViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows to be view or edit custom image objects types.
+    API endpoint that allows to be view or edit image objects.
 
     get:
-    Return a list of all the existing image objects types.
+    List image objects matching url parameters.
 
     post:
-    Create a new image objects type instance.
+    Create a new image object instance.
 
     patch:
-    edit and update an existing image objects type.
+    edit and update an existing image object.
 
     delete:
-    permanently delete an existing empty image objects type.
+    permanently delete an existing image object.
     """
     queryset = image_object_types.objects.all()
     serializer_class = image_object_types_serializer
@@ -217,17 +176,13 @@ class image_object_typesViewSet(viewsets.ModelViewSet):
             self.permission_classes = ( IsAuthenticated, )
         super(image_object_typesViewSet, self).initial(request, *args, **kwargs)
 
-@method_decorator(name='list', decorator=swagger_auto_schema(
-    operation_description="description from swagger_auto_schema via method_decorator",
-    filter_inspectors=[DjangoFilterDescriptionInspector],
-    manual_parameters=[asgeojson_param,apikey_param],
-))
+
 class image_objectsViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows to be view or edit user recognized image objects.
+    API endpoint that allows to be view or edit image objects.
 
     get:
-    Return a list of all the existing image objects.
+    List image objects matching url parameters.
 
     post:
     Create a new image object instance.
@@ -236,7 +191,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
     edit and update an existing image object.
 
     delete:
-    permanently delete an existing empty image object.
+    permanently delete an existing image object.
     """
     queryset = image_objects.objects.all()
     serializer_class = image_objects_serializer
@@ -263,19 +218,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
 
 class userkeysViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint that allows to be view or edit userkeys user capabilities
-
-    get:
-    Return a list of all the existing userkeys.
-
-    post:
-    Create a new userkey instance.
-
-    patch:
-    edit and update an userkey panorama.
-
-    delete:
-    permanently delete an userkey empty panorama.
+    API endpoint that allows users to be viewed or edited.
     """
     queryset = userkeys.objects.all()
     serializer_class = userkeys_serializer

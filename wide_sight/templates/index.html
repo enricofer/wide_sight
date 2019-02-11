@@ -1,16 +1,36 @@
-<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>wide_sight_frontend</title><style>#ws1{
-      width:1000px;
-      height:600px;
-      background-color: green;
-    }
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta charset=utf-8>
+      <meta name=viewport content="width=device-width,initial-scale=1">
+      <title>wide_sight_frontend</title>
+      <style>body {
+         display: flex;
+         height: 100vh;
+         margin: 0;
+         overflow: auto;
+         }
+         #ws{
+         flex: 1;
+         background: tan;
+         overflow: hidden;
+         }
+         wide-sight {
+         width:100%;
+         height:100%;
+         }
+      </style>
+      <link href=/static/css/app.5e78126307d8a348af20242fe169fe85.css rel=stylesheet>
+   </head>
+   <body>
+      <div id=ws>
+         <wide-sight 
+			backend=http://localhost:8080 apikey=3788e7c9-ace9-4fb6-95b9-db6170b6286f 
+			panokey={{pano_id}} 
+			overlay=http://localhost:8080/static/test.geo.json>
+		</wide-sight>
+      </div>
+      <script type=text/javascript src=/static/js/manifest.2ae2e69a05c33dfc65f8.js></script><script type=text/javascript src=/static/js/vendor.18290c6ecb5cb5f60821.js></script><script type=text/javascript src=/static/js/app.424ca62272b588d1156b.js></script>
+   </body>
+</html>
 
-    #ws2{
-      width:200px;
-      height:200px;
-      background-color: gray;
-    }
-
-    wide-sight {
-      width:100%;
-      height:100%;
-    }</style><link href=/static/css/app.9c8f180362971fd759afffd7a417d578.css rel=stylesheet></head><body><div id=ws1><wide-sight backend=127.0.0.1:8000 apikey=375368dfd01b9bd9d26e2284ce18398adbd07e93 panokey={{pano_id}}></wide-sight></div><script type=text/javascript src=/static/js/manifest.2ae2e69a05c33dfc65f8.js></script><script type=text/javascript src=/static/js/vendor.381d37628fddc101ba93.js></script><script type=text/javascript src=/static/js/app.4739c2f517bf6941edc3.js></script></body></html>
