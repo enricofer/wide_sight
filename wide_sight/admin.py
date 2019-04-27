@@ -10,6 +10,7 @@ class panoramaAdmin( admin.OSMGeoAdmin):
         return format_html('<img src="{}" />'.format(obj.eqimage_thumbnail.url))
 
     list_display = ['eqimage_tag',]
+    list_per_page = 15
     exclude = ('', )
 
 admin.site.register(sequences, admin.OSMGeoAdmin)
