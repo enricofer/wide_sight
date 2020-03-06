@@ -1,7 +1,7 @@
 Django
 django-appconf==1.0.2
 django-imagekit==4.0.2
-djangorestframework==3.8.2
+djangorestframework==3.9.1
 djangorestframework-gis==0.13
 ExifRead==2.1.2
 #pygdal
