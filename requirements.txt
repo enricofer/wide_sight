@@ -6,7 +6,7 @@ djangorestframework-gis==0.13
 ExifRead==2.1.2
 #pygdal
 #GDAL
-numpy==1.15.1
+numpy==1.22.0
 pilkit==2.0
 Pillow==5.2.0
 psycopg2==2.7.5
