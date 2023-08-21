@@ -6,6 +6,7 @@ from django.contrib.gis.geos import GEOSGeometry, Point
 from rest_framework.reverse import reverse
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from .models import sequences, panoramas, image_object_types, image_objects, userkeys, appkeys
+from .utils import get_utm_srid_from_lonlat
 
 class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSerializer ModelSerializer
 
@@ -24,7 +25,7 @@ class sequences_serializer(serializers.ModelSerializer):#HyperlinkedModelSeriali
 
 
 class panoramas_serializer(serializers.ModelSerializer):
-    #utm_geom = serializers.SerializerMethodField()
+    utm_geom = serializers.SerializerMethodField()
     def get_utm_geom(self,obj):
         if obj.lon and obj.lat:
             utm_srid = get_utm_srid_from_lonlat(obj.lon,obj.lat)
@@ -44,13 +45,13 @@ class panoramas_serializer(serializers.ModelSerializer):
 
     class Meta:
         model = panoramas
-        read_only_fields = ('id', 'utm_x', 'utm_y', 'utm_srid', 'utm_code', 'camera_prod', 'camera_model')
+        read_only_fields = ('id', 'utm_x', 'utm_y', 'utm_srid', 'utm_code', 'utm_geom', 'camera_prod', 'camera_model')
         fields = (
             'id',
             'eqimage',
             #'eqimage_thumbnail',
             'geom',
-            #'utm_geom',
+            'utm_geom',
             'sequence',
             'creator_name',
             'shooting_time',
