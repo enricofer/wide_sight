@@ -95,9 +95,9 @@ REST_FRAMEWORK = {
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-SPATIALITE_LIBRARY_PATH = '/usr/lib/i386-linux-gnu/mod_spatialite.so' #blob
-SPATIALITE_LIBRARY_PATH = 'mod_spatialite.so' #ubuntu-asus
-SPATIALITE_LIBRARY_PATH = '/usr/lib/i386-linux-gnu/libspatialite.so' #urb
+#SPATIALITE_LIBRARY_PATH = '/usr/lib/arm-linux-gnueabihf/mod_spatialite.so' #raspbian
+SPATIALITE_LIBRARY_PATH = 'mod_spatialite.so' #ubuntu 
+#SPATIALITE_LIBRARY_PATH = '/usr/lib/i386-linux-gnu/libspatialite.so' #ubuntu 32bit
 
 DATABASES = {
     'default': {
