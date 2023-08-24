@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_api_key.permissions import HasAPIAccess
 from django_filters.rest_framework import DjangoFilterBackend
@@ -32,12 +32,16 @@ from .permissions import baseAPIPermission
 
 #@login_required(login_url='/login/?next=/viewer/')
 def viewer(request, pano_id = ''):
-    if not pano_id:
-        pano_id = "0329a9dd-6c57-4af0-a347-ba1133a6094c"
-    return render(request, 'index.html', {'pano_id': pano_id})
+    if not pano_id and panoramas.objects.all().first():
+        pano_id = str(panoramas.objects.all().first().id)
+        print("id",panoramas.objects.all().first().id)
+    else:
+        pano_id = ""
+    print ("HOST",request.build_absolute_uri(location=None))
+    return render(request, 'index.html', {'pano_id': pano_id, 'backend': request.build_absolute_uri(location=None).replace("/viewer/","")})
 
 class basePagination(PageNumberPagination):
-    page_size = 100
+    page_size = 500
     page_size_query_param = 'page_size'
     max_page_size = 10000
 
@@ -167,13 +171,13 @@ class image_object_typesViewSet(viewsets.ModelViewSet):
     """
     queryset = image_object_types.objects.all()
     serializer_class = image_object_types_serializer
-    permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+    permission_classes = ( AllowAny,) #Or(baseAPIPermission, IsAuthenticated, HasAPIAccess)
 
     def initial(self, request, *args, **kwargs):
         if request.method == 'GET':
             self.permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess), ) #Or(baseAPIPermission, HasAPIAccess),
         else:
-            self.permission_classes = ( IsAuthenticated, )
+            self.permission_classes = ( AllowAny, ) #IsAuthenticated,
         super(image_object_typesViewSet, self).initial(request, *args, **kwargs)
 
 
@@ -195,7 +199,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
     """
     queryset = image_objects.objects.all()
     serializer_class = image_objects_serializer
-    permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess),)
+    permission_classes = ( AllowAny,) #Or(baseAPIPermission, IsAuthenticated, HasAPIAccess)
     pagination_class = basePagination
     distance_filter_field = 'geom'
     bbox_filter_field = 'geom'
@@ -213,7 +217,7 @@ class image_objectsViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             self.permission_classes = ( Or(baseAPIPermission, IsAuthenticated, HasAPIAccess), ) #Or(baseAPIPermission, HasAPIAccess),
         else:
-            self.permission_classes = ( IsAuthenticated, )
+            self.permission_classes = ( AllowAny, ) #IsAuthenticated,
         super(image_objectsViewSet, self).initial(request, *args, **kwargs)
 
 class userkeysViewSet(viewsets.ReadOnlyModelViewSet):

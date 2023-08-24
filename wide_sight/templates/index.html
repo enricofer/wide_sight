@@ -20,17 +20,20 @@
          height:100%;
          }
       </style>
-      <link href=/static/css/app.65da4e56b3d0ebd8dc5478b4a304b891.css rel=stylesheet>
+      <link href=/static/css/app.6ac6288a204c185e99704f8ef29f3fe2.css rel=stylesheet>
    </head>
    <body>
       <div id=ws>
          <wide-sight 
-			backend=http://127.0.0.1:8000/apikey=3788e7c9-ace9-4fb6-95b9-db6170b6286f 
-			panokey={{pano_id}} 
-			overlay=http://127.0.0.1:8000/static/test.geo.json>
+			backend="{{backend}}"
+         apikey="development"
+			panokey="{{pano_id}}"
+			overlay="{{backend}}/static/test.geo.json>"
 		</wide-sight>
       </div>
-      <script type=text/javascript src=/static/js/manifest.2ae2e69a05c33dfc65f8.js></script><script type=text/javascript src=/static/js/vendor.18290c6ecb5cb5f60821.js></script><script type=text/javascript src=/static/js/app.65b69a75054a6d17a7c8.js></script>
+      <script type=text/javascript src=/static/js/manifest.2ae2e69a05c33dfc65f8.js></script>
+      <script type=text/javascript src=/static/js/vendor.18290c6ecb5cb5f60821.js></script>
+      <script type=text/javascript src=/static/js/app.ff0a10915a5f0e83ec7c.js></script>
    </body>
 </html>
 
