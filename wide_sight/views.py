@@ -35,8 +35,6 @@ def viewer(request, pano_id = ''):
     if not pano_id and panoramas.objects.all().first():
         pano_id = str(panoramas.objects.all().first().id)
         print("id",panoramas.objects.all().first().id)
-    else:
-        pano_id = ""
     print ("HOST",request.build_absolute_uri(location=None))
     backend = request.build_absolute_uri(location=None)
     return render(request, 'index.html', {'pano_id': pano_id, 'backend': backend[:backend.find("/viewer")]})
