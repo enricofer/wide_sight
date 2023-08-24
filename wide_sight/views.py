@@ -38,7 +38,8 @@ def viewer(request, pano_id = ''):
     else:
         pano_id = ""
     print ("HOST",request.build_absolute_uri(location=None))
-    return render(request, 'index.html', {'pano_id': pano_id, 'backend': request.build_absolute_uri(location=None).replace("/viewer/","")})
+    backend = request.build_absolute_uri(location=None)
+    return render(request, 'index.html', {'pano_id': pano_id, 'backend': backend[:backend.find("/viewer")]})
 
 class basePagination(PageNumberPagination):
     page_size = 500
