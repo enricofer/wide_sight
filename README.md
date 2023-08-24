@@ -32,8 +32,13 @@ python manage.py migrate
 ```
 
 Create an admin user
+for testing keep the suggested credential that are syncronized with the included viewer webapp
 
 ```
+DJANGO_SUPERUSER_PASSWORD=letmein python manage.py createsuperuser --username admin --email admin@email.com --noinput
+
+or interactively
+
 python manage.py createsuperuser
 ```
 
